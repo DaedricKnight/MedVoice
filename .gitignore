@@ -1,0 +1,24 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# Android Studio / IDE
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+.kotlin/
+
+# Local machine config (SDK path etc.)
+local.properties
+
+# macOS
+.DS_Store
+
+# Host-side whisper.cpp build (used only for desktop smoke tests)
+third_party/whisper.cpp/build-host/
+
+# Logs
+*.log

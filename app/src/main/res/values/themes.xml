@@ -1,0 +1,5 @@
+<resources>
+    <style name="Theme.MedVoice" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">#0D3B66</item>
+    </style>
+</resources>
