@@ -85,6 +85,8 @@ data class ChartUiState(
     val historyType: VitalType? = null,
     val historyPoints: List<HistoryPoint> = emptyList(),
     val ttsMuted: Boolean = false,
+    val accuracyMode: Boolean = false,
+    val switchingModel: Boolean = false,
     val lastInferenceMs: Long = 0
 )
 
@@ -140,7 +142,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
             if (result.isFailure) {
                 addLog("Model failed to load: ${result.exceptionOrNull()?.message}", null, null, LogKind.ERROR)
             } else {
-                addLog("On-device model loaded (106 intents, INT8, offline)", null, null, LogKind.INFO)
+                addLog("On-device model loaded (${classifier.commandCount} intents, INT8, offline)", null, null, LogKind.INFO)
             }
         }
         voiceInput.initialize { result ->
@@ -242,6 +244,26 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             kotlinx.coroutines.delay(300)
             if (tts?.isSpeaking != true) voiceInput.setPaused(false)
+        }
+    }
+
+    /** Fast (base.en, ~1 s) vs Accuracy (small.en, 2-4x slower, better on accents). */
+    fun toggleAccuracyMode() {
+        if (_uiState.value.switchingModel) return
+        val target = !_uiState.value.accuracyMode
+        _uiState.update { it.copy(switchingModel = true) }
+        addLog(
+            "Switching ASR to ${if (target) "accuracy model (small.en)" else "fast model (base.en)"}…",
+            null, null, LogKind.INFO
+        )
+        voiceInput.setAccuracyMode(target) { result ->
+            _uiState.update { it.copy(switchingModel = false) }
+            if (result.isSuccess) {
+                _uiState.update { it.copy(accuracyMode = target) }
+                reportInfo("ASR model ready: ${if (target) "small.en (accuracy)" else "base.en (fast)"}")
+            } else {
+                reportError("Model switch failed: ${result.exceptionOrNull()?.message}")
+            }
         }
     }
 
@@ -401,8 +423,8 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
                 VoiceShortcuts.isConfirm(text) -> confirmPendingAction()
                 VoiceShortcuts.isCancel(text) -> dismissPendingAction()
                 else -> {
-                    addLog("Waiting for confirmation — say \"confirm\" or \"cancel\"", null, null, LogKind.WARN)
-                    speak("Say confirm or cancel")
+                    addLog("Waiting for confirmation — say \"yes confirm\" or \"negative\"", null, null, LogKind.WARN)
+                    speak("Say yes confirm, or negative")
                 }
             }
             return
@@ -452,7 +474,8 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
                         )
                     )
                 }
-                speak("$description. Say confirm or cancel")
+                // "yes confirm"/"negative" survive accents (96%) far better than bare words
+                speak("$description. Say yes confirm, or negative")
                 return@launch
             }
 
@@ -576,7 +599,8 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
         val alert = VitalAlerts.assess(type, value)
         if (alert != null) {
             addLog("⚠ ${alert.message}", result.label, null, LogKind.WARN, rawText)
-            speak("Warning. ${alert.message}. Say undo if this is a mistake")
+            // "scratch that" is the accent-robust undo phrase (96% vs 7% for bare "undo")
+            speak("Warning. ${alert.message}. Say scratch that if this is a mistake")
         } else {
             speak(spokenOk)
         }

@@ -32,6 +32,9 @@ class MedIntentClassifier(private val context: Context) {
     private var session: OrtSession? = null
     private var tokenizer: WordPieceTokenizer? = null
     private val labels = mutableListOf<String>()
+
+    /** Command count for UI reporting (excludes the service "none" class). */
+    val commandCount: Int get() = labels.count { it != "none" }
     private val env = OrtEnvironment.getEnvironment()
 
     companion object {

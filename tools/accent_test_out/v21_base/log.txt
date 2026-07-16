@@ -1,0 +1,306 @@
+[1/280] US       140wpm       PASS         record blood pressure 140 over 90
+[2/280] US       140wpm       PASS         log heart rate 72
+[3/280] US       140wpm       PASS         temperature is 38.5
+[4/280] US       140wpm       PASS         oxygen saturation 82
+[5/280] US       140wpm       PASS         pain level 7 out of 10
+[6/280] US       140wpm       PASS         please discharge the patient
+[7/280] US       140wpm       PASS         open patient chart for jane roe
+[8/280] US       140wpm       PASS         add a new patient
+[9/280] US       140wpm       PASS         undo the last entry
+[10/280] US       140wpm       PASS         call code blue
+[11/280] US       180wpm       PASS         record blood pressure 140 over 90
+[12/280] US       180wpm       PASS         log heart rate 72
+[13/280] US       180wpm       PASS         temperature is 38.5
+[14/280] US       180wpm       PASS         oxygen saturation 82
+[15/280] US       180wpm       PASS         pain level 7 out of 10
+[16/280] US       180wpm       PASS         please discharge the patient
+[17/280] US       180wpm       PASS         open patient chart for jane roe
+[18/280] US       180wpm       PASS         add a new patient
+[19/280] US       180wpm       PASS         undo the last entry
+[20/280] US       180wpm       PASS         call code blue
+[21/280] US       220wpm       PASS         record blood pressure 140 over 90
+[22/280] US       220wpm       PASS         log heart rate 72
+[23/280] US       220wpm       PASS         temperature is 38.5
+[24/280] US       220wpm       PASS         oxygen saturation 82
+[25/280] US       220wpm       PASS         pain level 7 out of 10
+[26/280] US       220wpm       PASS         please discharge the patient
+[27/280] US       220wpm       PASS         open patient chart for jane roe
+[28/280] US       220wpm       PASS         add a new patient
+[29/280] US       220wpm       PASS         undo the last entry
+[30/280] US       220wpm       PASS         call code blue
+[31/280] US       180wpm+noise PASS         record blood pressure 140 over 90
+[32/280] US       180wpm+noise PASS         log heart rate 72
+[33/280] US       180wpm+noise PASS         temperature is 38.5
+[34/280] US       180wpm+noise PASS         oxygen saturation 82
+[35/280] US       180wpm+noise WRONG_INTENT pain level 7 out of 10
+[36/280] US       180wpm+noise PASS         please discharge the patient
+[37/280] US       180wpm+noise PASS         open patient chart for jane roe
+[38/280] US       180wpm+noise PASS         add a new patient
+[39/280] US       180wpm+noise PASS         undo the last entry
+[40/280] US       180wpm+noise PASS         call code blue
+[41/280] GB       140wpm       PASS         record blood pressure 140 over 90
+[42/280] GB       140wpm       PASS         log heart rate 72
+[43/280] GB       140wpm       PASS         temperature is 38.5
+[44/280] GB       140wpm       PASS         oxygen saturation 82
+[45/280] GB       140wpm       PASS         pain level 7 out of 10
+[46/280] GB       140wpm       PASS         please discharge the patient
+[47/280] GB       140wpm       PASS         open patient chart for jane roe
+[48/280] GB       140wpm       PASS         add a new patient
+[49/280] GB       140wpm       PASS         undo the last entry
+[50/280] GB       140wpm       PASS         call code blue
+[51/280] GB       180wpm       PASS         record blood pressure 140 over 90
+[52/280] GB       180wpm       PASS         log heart rate 72
+[53/280] GB       180wpm       PASS         temperature is 38.5
+[54/280] GB       180wpm       PASS         oxygen saturation 82
+[55/280] GB       180wpm       PASS         pain level 7 out of 10
+[56/280] GB       180wpm       PASS         please discharge the patient
+[57/280] GB       180wpm       PASS         open patient chart for jane roe
+[58/280] GB       180wpm       PASS         add a new patient
+[59/280] GB       180wpm       PASS         undo the last entry
+[60/280] GB       180wpm       PASS         call code blue
+[61/280] GB       220wpm       PASS         record blood pressure 140 over 90
+[62/280] GB       220wpm       PASS         log heart rate 72
+[63/280] GB       220wpm       REJECTED     temperature is 38.5
+[64/280] GB       220wpm       PASS         oxygen saturation 82
+[65/280] GB       220wpm       PASS         pain level 7 out of 10
+[66/280] GB       220wpm       PASS         please discharge the patient
+[67/280] GB       220wpm       PASS         open patient chart for jane roe
+[68/280] GB       220wpm       PASS         add a new patient
+[69/280] GB       220wpm       PASS         undo the last entry
+[70/280] GB       220wpm       PASS         call code blue
+[71/280] GB       180wpm+noise PASS         record blood pressure 140 over 90
+[72/280] GB       180wpm+noise PASS         log heart rate 72
+[73/280] GB       180wpm+noise PASS         temperature is 38.5
+[74/280] GB       180wpm+noise PASS         oxygen saturation 82
+[75/280] GB       180wpm+noise PASS         pain level 7 out of 10
+[76/280] GB       180wpm+noise PASS         please discharge the patient
+[77/280] GB       180wpm+noise PASS         open patient chart for jane roe
+[78/280] GB       180wpm+noise PASS         add a new patient
+[79/280] GB       180wpm+noise PASS         undo the last entry
+[80/280] GB       180wpm+noise PASS         call code blue
+[81/280] AU       140wpm       PASS         record blood pressure 140 over 90
+[82/280] AU       140wpm       PASS         log heart rate 72
+[83/280] AU       140wpm       PASS         temperature is 38.5
+[84/280] AU       140wpm       PASS         oxygen saturation 82
+[85/280] AU       140wpm       PASS         pain level 7 out of 10
+[86/280] AU       140wpm       PASS         please discharge the patient
+[87/280] AU       140wpm       PASS         open patient chart for jane roe
+[88/280] AU       140wpm       PASS         add a new patient
+[89/280] AU       140wpm       PASS         undo the last entry
+[90/280] AU       140wpm       PASS         call code blue
+[91/280] AU       180wpm       PASS         record blood pressure 140 over 90
+[92/280] AU       180wpm       PASS         log heart rate 72
+[93/280] AU       180wpm       PASS         temperature is 38.5
+[94/280] AU       180wpm       PASS         oxygen saturation 82
+[95/280] AU       180wpm       PASS         pain level 7 out of 10
+[96/280] AU       180wpm       PASS         please discharge the patient
+[97/280] AU       180wpm       PASS         open patient chart for jane roe
+[98/280] AU       180wpm       PASS         add a new patient
+[99/280] AU       180wpm       PASS         undo the last entry
+[100/280] AU       180wpm       PASS         call code blue
+[101/280] AU       220wpm       PASS         record blood pressure 140 over 90
+[102/280] AU       220wpm       PASS         log heart rate 72
+[103/280] AU       220wpm       PASS         temperature is 38.5
+[104/280] AU       220wpm       PASS         oxygen saturation 82
+[105/280] AU       220wpm       PASS         pain level 7 out of 10
+[106/280] AU       220wpm       PASS         please discharge the patient
+[107/280] AU       220wpm       PASS         open patient chart for jane roe
+[108/280] AU       220wpm       PASS         add a new patient
+[109/280] AU       220wpm       PASS         undo the last entry
+[110/280] AU       220wpm       PASS         call code blue
+[111/280] AU       180wpm+noise PASS         record blood pressure 140 over 90
+[112/280] AU       180wpm+noise PASS         log heart rate 72
+[113/280] AU       180wpm+noise PASS         temperature is 38.5
+[114/280] AU       180wpm+noise PASS         oxygen saturation 82
+[115/280] AU       180wpm+noise PASS         pain level 7 out of 10
+[116/280] AU       180wpm+noise PASS         please discharge the patient
+[117/280] AU       180wpm+noise PASS         open patient chart for jane roe
+[118/280] AU       180wpm+noise REJECTED     add a new patient
+[119/280] AU       180wpm+noise PASS         undo the last entry
+[120/280] AU       180wpm+noise PASS         call code blue
+[121/280] IE       140wpm       PASS         record blood pressure 140 over 90
+[122/280] IE       140wpm       PASS         log heart rate 72
+[123/280] IE       140wpm       PASS         temperature is 38.5
+[124/280] IE       140wpm       PASS         oxygen saturation 82
+[125/280] IE       140wpm       PASS         pain level 7 out of 10
+[126/280] IE       140wpm       PASS         please discharge the patient
+[127/280] IE       140wpm       PASS         open patient chart for jane roe
+[128/280] IE       140wpm       PASS         add a new patient
+[129/280] IE       140wpm       PASS         undo the last entry
+[130/280] IE       140wpm       PASS         call code blue
+[131/280] IE       180wpm       PASS         record blood pressure 140 over 90
+[132/280] IE       180wpm       PASS         log heart rate 72
+[133/280] IE       180wpm       PASS         temperature is 38.5
+[134/280] IE       180wpm       PASS         oxygen saturation 82
+[135/280] IE       180wpm       PASS         pain level 7 out of 10
+[136/280] IE       180wpm       PASS         please discharge the patient
+[137/280] IE       180wpm       PASS         open patient chart for jane roe
+[138/280] IE       180wpm       PASS         add a new patient
+[139/280] IE       180wpm       PASS         undo the last entry
+[140/280] IE       180wpm       PASS         call code blue
+[141/280] IE       220wpm       PASS         record blood pressure 140 over 90
+[142/280] IE       220wpm       PASS         log heart rate 72
+[143/280] IE       220wpm       PASS         temperature is 38.5
+[144/280] IE       220wpm       PASS         oxygen saturation 82
+[145/280] IE       220wpm       PASS         pain level 7 out of 10
+[146/280] IE       220wpm       PASS         please discharge the patient
+[147/280] IE       220wpm       PASS         open patient chart for jane roe
+[148/280] IE       220wpm       PASS         add a new patient
+[149/280] IE       220wpm       PASS         undo the last entry
+[150/280] IE       220wpm       PASS         call code blue
+[151/280] IE       180wpm+noise PASS         record blood pressure 140 over 90
+[152/280] IE       180wpm+noise PASS         log heart rate 72
+[153/280] IE       180wpm+noise PASS         temperature is 38.5
+[154/280] IE       180wpm+noise PASS         oxygen saturation 82
+[155/280] IE       180wpm+noise PASS         pain level 7 out of 10
+[156/280] IE       180wpm+noise PASS         please discharge the patient
+[157/280] IE       180wpm+noise PASS         open patient chart for jane roe
+[158/280] IE       180wpm+noise PASS         add a new patient
+[159/280] IE       180wpm+noise PASS         undo the last entry
+[160/280] IE       180wpm+noise PASS         call code blue
+[161/280] IN       140wpm       PASS         record blood pressure 140 over 90
+[162/280] IN       140wpm       PASS         log heart rate 72
+[163/280] IN       140wpm       REJECTED     temperature is 38.5
+[164/280] IN       140wpm       PASS         oxygen saturation 82
+[165/280] IN       140wpm       PASS         pain level 7 out of 10
+[166/280] IN       140wpm       PASS         please discharge the patient
+[167/280] IN       140wpm       PASS         open patient chart for jane roe
+[168/280] IN       140wpm       PASS         add a new patient
+[169/280] IN       140wpm       PASS         undo the last entry
+[170/280] IN       140wpm       PASS         call code blue
+[171/280] IN       180wpm       PASS         record blood pressure 140 over 90
+[172/280] IN       180wpm       PASS         log heart rate 72
+[173/280] IN       180wpm       PASS         temperature is 38.5
+[174/280] IN       180wpm       PASS         oxygen saturation 82
+[175/280] IN       180wpm       REJECTED     pain level 7 out of 10
+[176/280] IN       180wpm       PASS         please discharge the patient
+[177/280] IN       180wpm       PASS         open patient chart for jane roe
+[178/280] IN       180wpm       PASS         add a new patient
+[179/280] IN       180wpm       PASS         undo the last entry
+[180/280] IN       180wpm       PASS         call code blue
+[181/280] IN       220wpm       PASS         record blood pressure 140 over 90
+[182/280] IN       220wpm       PASS         log heart rate 72
+[183/280] IN       220wpm       PASS         temperature is 38.5
+[184/280] IN       220wpm       PASS         oxygen saturation 82
+[185/280] IN       220wpm       REJECTED     pain level 7 out of 10
+[186/280] IN       220wpm       PASS         please discharge the patient
+[187/280] IN       220wpm       PASS         open patient chart for jane roe
+[188/280] IN       220wpm       PASS         add a new patient
+[189/280] IN       220wpm       PASS         undo the last entry
+[190/280] IN       220wpm       PASS         call code blue
+[191/280] IN       180wpm+noise PASS         record blood pressure 140 over 90
+[192/280] IN       180wpm+noise PASS         log heart rate 72
+[193/280] IN       180wpm+noise PASS         temperature is 38.5
+[194/280] IN       180wpm+noise PASS         oxygen saturation 82
+[195/280] IN       180wpm+noise WRONG_INTENT pain level 7 out of 10
+[196/280] IN       180wpm+noise PASS         please discharge the patient
+[197/280] IN       180wpm+noise PASS         open patient chart for jane roe
+[198/280] IN       180wpm+noise PASS         add a new patient
+[199/280] IN       180wpm+noise PASS         undo the last entry
+[200/280] IN       180wpm+noise PASS         call code blue
+[201/280] ZA       140wpm       PASS         record blood pressure 140 over 90
+[202/280] ZA       140wpm       PASS         log heart rate 72
+[203/280] ZA       140wpm       PASS         temperature is 38.5
+[204/280] ZA       140wpm       PASS         oxygen saturation 82
+[205/280] ZA       140wpm       PASS         pain level 7 out of 10
+[206/280] ZA       140wpm       PASS         please discharge the patient
+[207/280] ZA       140wpm       PASS         open patient chart for jane roe
+[208/280] ZA       140wpm       PASS         add a new patient
+[209/280] ZA       140wpm       PASS         undo the last entry
+[210/280] ZA       140wpm       PASS         call code blue
+[211/280] ZA       180wpm       PASS         record blood pressure 140 over 90
+[212/280] ZA       180wpm       PASS         log heart rate 72
+[213/280] ZA       180wpm       PASS         temperature is 38.5
+[214/280] ZA       180wpm       PASS         oxygen saturation 82
+[215/280] ZA       180wpm       PASS         pain level 7 out of 10
+[216/280] ZA       180wpm       PASS         please discharge the patient
+[217/280] ZA       180wpm       PASS         open patient chart for jane roe
+[218/280] ZA       180wpm       PASS         add a new patient
+[219/280] ZA       180wpm       PASS         undo the last entry
+[220/280] ZA       180wpm       PASS         call code blue
+[221/280] ZA       220wpm       PASS         record blood pressure 140 over 90
+[222/280] ZA       220wpm       PASS         log heart rate 72
+[223/280] ZA       220wpm       PASS         temperature is 38.5
+[224/280] ZA       220wpm       PASS         oxygen saturation 82
+[225/280] ZA       220wpm       PASS         pain level 7 out of 10
+[226/280] ZA       220wpm       PASS         please discharge the patient
+[227/280] ZA       220wpm       PASS         open patient chart for jane roe
+[228/280] ZA       220wpm       PASS         add a new patient
+[229/280] ZA       220wpm       PASS         undo the last entry
+[230/280] ZA       220wpm       PASS         call code blue
+[231/280] ZA       180wpm+noise PASS         record blood pressure 140 over 90
+[232/280] ZA       180wpm+noise PASS         log heart rate 72
+[233/280] ZA       180wpm+noise PASS         temperature is 38.5
+[234/280] ZA       180wpm+noise PASS         oxygen saturation 82
+[235/280] ZA       180wpm+noise REJECTED     pain level 7 out of 10
+[236/280] ZA       180wpm+noise PASS         please discharge the patient
+[237/280] ZA       180wpm+noise PASS         open patient chart for jane roe
+[238/280] ZA       180wpm+noise PASS         add a new patient
+[239/280] ZA       180wpm+noise PASS         undo the last entry
+[240/280] ZA       180wpm+noise REJECTED     call code blue
+[241/280] GB-aged  140wpm       PASS         record blood pressure 140 over 90
+[242/280] GB-aged  140wpm       PASS         log heart rate 72
+[243/280] GB-aged  140wpm       PASS         temperature is 38.5
+[244/280] GB-aged  140wpm       PASS         oxygen saturation 82
+[245/280] GB-aged  140wpm       WRONG_INTENT pain level 7 out of 10
+[246/280] GB-aged  140wpm       PASS         please discharge the patient
+[247/280] GB-aged  140wpm       PASS         open patient chart for jane roe
+[248/280] GB-aged  140wpm       PASS         add a new patient
+[249/280] GB-aged  140wpm       PASS         undo the last entry
+[250/280] GB-aged  140wpm       PASS         call code blue
+[251/280] GB-aged  180wpm       PASS         record blood pressure 140 over 90
+[252/280] GB-aged  180wpm       PASS         log heart rate 72
+[253/280] GB-aged  180wpm       PASS         temperature is 38.5
+[254/280] GB-aged  180wpm       PASS         oxygen saturation 82
+[255/280] GB-aged  180wpm       WRONG_INTENT pain level 7 out of 10
+[256/280] GB-aged  180wpm       PASS         please discharge the patient
+[257/280] GB-aged  180wpm       PASS         open patient chart for jane roe
+[258/280] GB-aged  180wpm       PASS         add a new patient
+[259/280] GB-aged  180wpm       REJECTED     undo the last entry
+[260/280] GB-aged  180wpm       REJECTED     call code blue
+[261/280] GB-aged  220wpm       PASS         record blood pressure 140 over 90
+[262/280] GB-aged  220wpm       PASS         log heart rate 72
+[263/280] GB-aged  220wpm       PASS         temperature is 38.5
+[264/280] GB-aged  220wpm       PASS         oxygen saturation 82
+[265/280] GB-aged  220wpm       WRONG_INTENT pain level 7 out of 10
+[266/280] GB-aged  220wpm       PASS         please discharge the patient
+[267/280] GB-aged  220wpm       PASS         open patient chart for jane roe
+[268/280] GB-aged  220wpm       PASS         add a new patient
+[269/280] GB-aged  220wpm       REJECTED     undo the last entry
+[270/280] GB-aged  220wpm       PASS         call code blue
+[271/280] GB-aged  180wpm+noise REJECTED     record blood pressure 140 over 90
+[272/280] GB-aged  180wpm+noise PASS         log heart rate 72
+[273/280] GB-aged  180wpm+noise PASS         temperature is 38.5
+[274/280] GB-aged  180wpm+noise PASS         oxygen saturation 82
+[275/280] GB-aged  180wpm+noise WRONG_INTENT pain level 7 out of 10
+[276/280] GB-aged  180wpm+noise PASS         please discharge the patient
+[277/280] GB-aged  180wpm+noise REJECTED     open patient chart for jane roe
+[278/280] GB-aged  180wpm+noise PASS         add a new patient
+[279/280] GB-aged  180wpm+noise REJECTED     undo the last entry
+[280/280] GB-aged  180wpm+noise REJECTED     call code blue
+
+=== SUMMARY by accent ===
+accent      pass  rejected  wrong  total  pass-rate
+US            39         0      1     40  98%
+GB            39         1      0     40  98%
+AU            39         1      0     40  98%
+IE            40         0      0     40  100%
+IN            36         3      1     40  90%
+ZA            38         2      0     40  95%
+GB-aged       29         7      4     40  72%
+
+=== SUMMARY by condition ===
+140wpm         pass 68/70 (97%), wrong-intent 1
+180wpm         pass 66/70 (94%), wrong-intent 1
+220wpm         pass 66/70 (94%), wrong-intent 1
+180wpm+noise   pass 60/70 (86%), wrong-intent 3
+
+=== DANGEROUS FAILURES (wrong intent above threshold): 6 ===
+  US       180wpm+noise said='pain level 7 out of 10' heard='Jane level 7 out of 10.' -> staff_transfer_patient_ward 0.919
+  IN       180wpm+noise said='pain level 7 out of 10' heard='13, level 7, out of 10.' -> staff_transfer_patient_ward 0.887
+  GB-aged  140wpm       said='pain level 7 out of 10' heard='Jane Roe will 7 out of 10.' -> staff_transfer_patient_ward 0.926
+  GB-aged  180wpm       said='pain level 7 out of 10' heard='Jane Roe will 7 out of 10.' -> staff_transfer_patient_ward 0.926
+  GB-aged  220wpm       said='pain level 7 out of 10' heard='Jane level 7 out of 10.' -> staff_transfer_patient_ward 0.919
+  GB-aged  180wpm+noise said='pain level 7 out of 10' heard='Jane level 7 out of 10.' -> staff_transfer_patient_ward 0.919
+
+Full results: tools/accent_test_out/v21_base/results.csv

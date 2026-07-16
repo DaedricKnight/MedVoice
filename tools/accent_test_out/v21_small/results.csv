@@ -1,0 +1,281 @@
+accent,voice,condition,phrase,expected,transcript,predicted,confidence,verdict
+US,Samantha,140wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+US,Samantha,140wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+US,Samantha,140wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+US,Samantha,140wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+US,Samantha,140wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+US,Samantha,140wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+US,Samantha,140wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+US,Samantha,140wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+US,Samantha,140wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+US,Samantha,140wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+US,Samantha,180wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+US,Samantha,180wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+US,Samantha,180wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+US,Samantha,180wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+US,Samantha,180wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+US,Samantha,180wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+US,Samantha,180wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+US,Samantha,180wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+US,Samantha,180wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+US,Samantha,180wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+US,Samantha,220wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+US,Samantha,220wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+US,Samantha,220wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+US,Samantha,220wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+US,Samantha,220wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+US,Samantha,220wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+US,Samantha,220wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+US,Samantha,220wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+US,Samantha,220wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+US,Samantha,220wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+US,Samantha,180wpm+noise,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+US,Samantha,180wpm+noise,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+US,Samantha,180wpm+noise,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+US,Samantha,180wpm+noise,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+US,Samantha,180wpm+noise,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+US,Samantha,180wpm+noise,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+US,Samantha,180wpm+noise,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+US,Samantha,180wpm+noise,add a new patient,emr_add_patient,Add a knee patient.,emr_add_patient,0.832,REJECTED
+US,Samantha,180wpm+noise,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+US,Samantha,180wpm+noise,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+GB,Daniel,140wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+GB,Daniel,140wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+GB,Daniel,140wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+GB,Daniel,140wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+GB,Daniel,140wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+GB,Daniel,140wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+GB,Daniel,140wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+GB,Daniel,140wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+GB,Daniel,140wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+GB,Daniel,140wpm,call code blue,emrgy_call_code_blue,Cool code blue.,emrgy_call_code_blue,0.941,PASS
+GB,Daniel,180wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+GB,Daniel,180wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+GB,Daniel,180wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+GB,Daniel,180wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+GB,Daniel,180wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+GB,Daniel,180wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+GB,Daniel,180wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+GB,Daniel,180wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+GB,Daniel,180wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+GB,Daniel,180wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+GB,Daniel,220wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+GB,Daniel,220wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+GB,Daniel,220wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+GB,Daniel,220wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+GB,Daniel,220wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+GB,Daniel,220wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+GB,Daniel,220wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+GB,Daniel,220wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+GB,Daniel,220wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+GB,Daniel,220wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+GB,Daniel,180wpm+noise,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+GB,Daniel,180wpm+noise,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+GB,Daniel,180wpm+noise,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+GB,Daniel,180wpm+noise,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+GB,Daniel,180wpm+noise,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+GB,Daniel,180wpm+noise,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+GB,Daniel,180wpm+noise,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+GB,Daniel,180wpm+noise,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+GB,Daniel,180wpm+noise,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+GB,Daniel,180wpm+noise,call code blue,emrgy_call_code_blue,Total blue.,emrgy_call_code_blue,0.991,PASS
+AU,Karen,140wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+AU,Karen,140wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+AU,Karen,140wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+AU,Karen,140wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+AU,Karen,140wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+AU,Karen,140wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+AU,Karen,140wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+AU,Karen,140wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+AU,Karen,140wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+AU,Karen,140wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+AU,Karen,180wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+AU,Karen,180wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+AU,Karen,180wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+AU,Karen,180wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation AT2.,vitals_log_oxygen_saturation,0.995,PASS
+AU,Karen,180wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+AU,Karen,180wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+AU,Karen,180wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+AU,Karen,180wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+AU,Karen,180wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+AU,Karen,180wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+AU,Karen,220wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+AU,Karen,220wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+AU,Karen,220wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+AU,Karen,220wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation AT2.,vitals_log_oxygen_saturation,0.995,PASS
+AU,Karen,220wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+AU,Karen,220wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+AU,Karen,220wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+AU,Karen,220wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+AU,Karen,220wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+AU,Karen,220wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+AU,Karen,180wpm+noise,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+AU,Karen,180wpm+noise,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+AU,Karen,180wpm+noise,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+AU,Karen,180wpm+noise,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+AU,Karen,180wpm+noise,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+AU,Karen,180wpm+noise,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+AU,Karen,180wpm+noise,open patient chart for jane roe,emr_open_patient_chart,Presentation chart for Jane Roe.,emr_open_patient_chart,0.993,PASS
+AU,Karen,180wpm+noise,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+AU,Karen,180wpm+noise,undo the last entry,emr_undo_last,John Doe the last entry.,emr_undo_last,0.994,PASS
+AU,Karen,180wpm+noise,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+IE,Moira,140wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+IE,Moira,140wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+IE,Moira,140wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+IE,Moira,140wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+IE,Moira,140wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+IE,Moira,140wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+IE,Moira,140wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+IE,Moira,140wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+IE,Moira,140wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+IE,Moira,140wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+IE,Moira,180wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+IE,Moira,180wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+IE,Moira,180wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+IE,Moira,180wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+IE,Moira,180wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+IE,Moira,180wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+IE,Moira,180wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+IE,Moira,180wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+IE,Moira,180wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+IE,Moira,180wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+IE,Moira,220wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+IE,Moira,220wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+IE,Moira,220wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+IE,Moira,220wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+IE,Moira,220wpm,pain level 7 out of 10,symptom_log_pain_level,campaign level 7 out of 10.,staff_transfer_patient_ward,0.821,REJECTED
+IE,Moira,220wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+IE,Moira,220wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+IE,Moira,220wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+IE,Moira,220wpm,undo the last entry,emr_undo_last,On do the last entry.,emr_undo_last,0.994,PASS
+IE,Moira,220wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+IE,Moira,180wpm+noise,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+IE,Moira,180wpm+noise,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+IE,Moira,180wpm+noise,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+IE,Moira,180wpm+noise,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+IE,Moira,180wpm+noise,pain level 7 out of 10,symptom_log_pain_level,pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+IE,Moira,180wpm+noise,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+IE,Moira,180wpm+noise,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+IE,Moira,180wpm+noise,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+IE,Moira,180wpm+noise,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+IE,Moira,180wpm+noise,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+IN,Rishi,140wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+IN,Rishi,140wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+IN,Rishi,140wpm,temperature is 38.5,vitals_log_temperature,Head temperature is 38.5.,vitals_log_temperature,0.992,PASS
+IN,Rishi,140wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+IN,Rishi,140wpm,pain level 7 out of 10,symptom_log_pain_level,pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+IN,Rishi,140wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+IN,Rishi,140wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+IN,Rishi,140wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+IN,Rishi,140wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+IN,Rishi,140wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+IN,Rishi,180wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+IN,Rishi,180wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+IN,Rishi,180wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+IN,Rishi,180wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+IN,Rishi,180wpm,pain level 7 out of 10,symptom_log_pain_level,pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+IN,Rishi,180wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+IN,Rishi,180wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient charged for Jane Roe.,emr_open_patient_chart,0.99,PASS
+IN,Rishi,180wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+IN,Rishi,180wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+IN,Rishi,180wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+IN,Rishi,220wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+IN,Rishi,220wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+IN,Rishi,220wpm,temperature is 38.5,vitals_log_temperature,Head temperature is 38.5.,vitals_log_temperature,0.992,PASS
+IN,Rishi,220wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+IN,Rishi,220wpm,pain level 7 out of 10,symptom_log_pain_level,pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+IN,Rishi,220wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+IN,Rishi,220wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+IN,Rishi,220wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+IN,Rishi,220wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+IN,Rishi,220wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+IN,Rishi,180wpm+noise,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+IN,Rishi,180wpm+noise,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+IN,Rishi,180wpm+noise,temperature is 38.5,vitals_log_temperature,State empressor is 38.5.,gen_locate_colleague,0.288,REJECTED
+IN,Rishi,180wpm+noise,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+IN,Rishi,180wpm+noise,pain level 7 out of 10,symptom_log_pain_level,15 level 7 out of 10.,staff_transfer_patient_ward,0.888,WRONG_INTENT
+IN,Rishi,180wpm+noise,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+IN,Rishi,180wpm+noise,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+IN,Rishi,180wpm+noise,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+IN,Rishi,180wpm+noise,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+IN,Rishi,180wpm+noise,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+ZA,Tessa,140wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+ZA,Tessa,140wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+ZA,Tessa,140wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+ZA,Tessa,140wpm,oxygen saturation 82,vitals_log_oxygen_saturation,oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+ZA,Tessa,140wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+ZA,Tessa,140wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+ZA,Tessa,140wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+ZA,Tessa,140wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+ZA,Tessa,140wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+ZA,Tessa,140wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+ZA,Tessa,180wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+ZA,Tessa,180wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+ZA,Tessa,180wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+ZA,Tessa,180wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+ZA,Tessa,180wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+ZA,Tessa,180wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+ZA,Tessa,180wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+ZA,Tessa,180wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+ZA,Tessa,180wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+ZA,Tessa,180wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+ZA,Tessa,220wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+ZA,Tessa,220wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+ZA,Tessa,220wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+ZA,Tessa,220wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+ZA,Tessa,220wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+ZA,Tessa,220wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+ZA,Tessa,220wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+ZA,Tessa,220wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+ZA,Tessa,220wpm,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+ZA,Tessa,220wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+ZA,Tessa,180wpm+noise,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+ZA,Tessa,180wpm+noise,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+ZA,Tessa,180wpm+noise,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+ZA,Tessa,180wpm+noise,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+ZA,Tessa,180wpm+noise,pain level 7 out of 10,symptom_log_pain_level,Log pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+ZA,Tessa,180wpm+noise,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+ZA,Tessa,180wpm+noise,open patient chart for jane roe,emr_open_patient_chart,Open patient chart for Jane Roe.,emr_open_patient_chart,0.996,PASS
+ZA,Tessa,180wpm+noise,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+ZA,Tessa,180wpm+noise,undo the last entry,emr_undo_last,Undo the last entry.,emr_undo_last,0.994,PASS
+ZA,Tessa,180wpm+noise,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+GB-aged,Grandma (English (UK)),140wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+GB-aged,Grandma (English (UK)),140wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+GB-aged,Grandma (English (UK)),140wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+GB-aged,Grandma (English (UK)),140wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+GB-aged,Grandma (English (UK)),140wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+GB-aged,Grandma (English (UK)),140wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+GB-aged,Grandma (English (UK)),140wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient child for Jane Roe.,emr_open_patient_chart,0.968,PASS
+GB-aged,Grandma (English (UK)),140wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+GB-aged,Grandma (English (UK)),140wpm,undo the last entry,emr_undo_last,I'll do the last entry.,emr_undo_last,0.994,PASS
+GB-aged,Grandma (English (UK)),140wpm,call code blue,emrgy_call_code_blue,Control code blue.,emrgy_call_code_blue,0.993,PASS
+GB-aged,Grandma (English (UK)),180wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+GB-aged,Grandma (English (UK)),180wpm,log heart rate 72,vitals_log_heart_rate,"Log heart rate, 72.",vitals_log_heart_rate,0.993,PASS
+GB-aged,Grandma (English (UK)),180wpm,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+GB-aged,Grandma (English (UK)),180wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+GB-aged,Grandma (English (UK)),180wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+GB-aged,Grandma (English (UK)),180wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+GB-aged,Grandma (English (UK)),180wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chat for Jane Roe.,lab_order_ultrasound,0.312,REJECTED
+GB-aged,Grandma (English (UK)),180wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+GB-aged,Grandma (English (UK)),180wpm,undo the last entry,emr_undo_last,I'll do the last entry.,emr_undo_last,0.994,PASS
+GB-aged,Grandma (English (UK)),180wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+GB-aged,Grandma (English (UK)),220wpm,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+GB-aged,Grandma (English (UK)),220wpm,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+GB-aged,Grandma (English (UK)),220wpm,temperature is 38.5,vitals_log_temperature,His temperature is 38.5.,vitals_log_temperature,0.993,PASS
+GB-aged,Grandma (English (UK)),220wpm,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation 82.,vitals_log_oxygen_saturation,0.995,PASS
+GB-aged,Grandma (English (UK)),220wpm,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+GB-aged,Grandma (English (UK)),220wpm,please discharge the patient,staff_discharge_patient,Please discharge the patient.,staff_discharge_patient,0.995,PASS
+GB-aged,Grandma (English (UK)),220wpm,open patient chart for jane roe,emr_open_patient_chart,Open patient chat for Jane Roe.,lab_order_ultrasound,0.312,REJECTED
+GB-aged,Grandma (English (UK)),220wpm,add a new patient,emr_add_patient,Add a new patient.,emr_add_patient,0.987,PASS
+GB-aged,Grandma (English (UK)),220wpm,undo the last entry,emr_undo_last,Do the last entry.,emr_undo_last,0.994,PASS
+GB-aged,Grandma (English (UK)),220wpm,call code blue,emrgy_call_code_blue,Call code blue.,emrgy_call_code_blue,0.993,PASS
+GB-aged,Grandma (English (UK)),180wpm+noise,record blood pressure 140 over 90,vitals_log_blood_pressure,Record blood pressure 140 over 90.,vitals_log_blood_pressure,0.995,PASS
+GB-aged,Grandma (English (UK)),180wpm+noise,log heart rate 72,vitals_log_heart_rate,Log heart rate 72.,vitals_log_heart_rate,0.993,PASS
+GB-aged,Grandma (English (UK)),180wpm+noise,temperature is 38.5,vitals_log_temperature,Temperature is 38.5.,vitals_log_temperature,0.993,PASS
+GB-aged,Grandma (English (UK)),180wpm+noise,oxygen saturation 82,vitals_log_oxygen_saturation,Oxygen saturation may be improved.,vitals_log_oxygen_saturation,0.992,PASS
+GB-aged,Grandma (English (UK)),180wpm+noise,pain level 7 out of 10,symptom_log_pain_level,Pain level 7 out of 10.,symptom_log_pain_level,0.994,PASS
+GB-aged,Grandma (English (UK)),180wpm+noise,please discharge the patient,staff_discharge_patient,His treat is charge of patients.,emr_open_patient_chart,0.99,WRONG_INTENT
+GB-aged,Grandma (English (UK)),180wpm+noise,open patient chart for jane roe,emr_open_patient_chart,Open station shot for Jane Roe.,emr_open_patient_chart,0.635,REJECTED
+GB-aged,Grandma (English (UK)),180wpm+noise,add a new patient,emr_add_patient,Add a mutation.,emrgy_call_code_blue,0.365,REJECTED
+GB-aged,Grandma (English (UK)),180wpm+noise,undo the last entry,emr_undo_last,Ambure the most empty.,emr_save_clinical_note,0.402,REJECTED
+GB-aged,Grandma (English (UK)),180wpm+noise,call code blue,emrgy_call_code_blue,Call for entry.,emr_save_clinical_note,0.713,REJECTED

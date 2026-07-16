@@ -59,6 +59,15 @@ class WhisperInputManager(
         }
     }
 
+    /** Switches between fast (base.en) and accuracy (small.en) ASR models. */
+    fun setAccuracyMode(enabled: Boolean, onDone: (Result<Unit>) -> Unit) {
+        stopListening()
+        scope.launch {
+            val result = engine.initialize(useAccuracyModel = enabled)
+            onDone(result)
+        }
+    }
+
     val isListening: Boolean get() = running.get()
 
     @SuppressLint("MissingPermission") // caller checks RECORD_AUDIO

@@ -116,6 +116,18 @@ assets (`app/src/androidTest/assets/tts/`). Two levels:
 ./gradlew :app:connectedDebugAndroidTest  # full voice pipeline on device
 ```
 
+## Accuracy mode & accent robustness
+
+The 🎯 toggle switches ASR from base.en (~1 s/command) to **small.en** (2-4x
+slower, much better on hard accents). The small model exceeds GitHub's file
+size limit — fetch it once after cloning: `./tools/fetch_models.sh`.
+
+Accent/intonation robustness is measured by an automated stand
+(`tools/accent_stress_test.py`): synthesized speech in 7 accents × speed ×
+noise through the full production pipeline. Current numbers and methodology:
+[tools/accent_test_out/REPORT.md](tools/accent_test_out/REPORT.md) —
+96.1% pass on base.en, GB/AU/ZA at 100% on small.en.
+
 ## Running
 
 Open in Android Studio, run on a tablet (landscape) or any emulator. First

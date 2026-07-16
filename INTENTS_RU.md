@@ -16,9 +16,9 @@ English version: [INTENTS_EN.md](INTENTS_EN.md)
 
 | Команда | Пример | Описание |
 |---|---|---|
-| `emr_open_patient_chart` | "open patient chart for Jane Roe", "switch to patient" | Открывает карту пациента; с именем — сразу переключается на него, без имени — показывает список пациентов |
+| `emr_open_patient_chart` | "open patient **file** for Jane Roe" (устойчиво к акцентам), "open patient chart for…", "switch to patient" | Открывает карту пациента; с именем — сразу переключается на него, без имени — показывает список пациентов |
 | `emr_add_patient` | "add a new patient" | Открывает форму нового пациента (имя, MRN, палата) |
-| `emr_undo_last` | "undo the last entry" | Удаляет последнюю запись показателя (то же, что шорткат «undo», но ловит развёрнутые формулировки) |
+| `emr_undo_last` | "**scratch that**" (устойчивый к акцентам шорткат), "undo the last entry" | Удаляет последнюю запись показателя (то же, что шорткат «undo», но ловит развёрнутые формулировки) |
 | `emr_create_clinical_note` | "create a new clinical note" | Создаёт новую клиническую заметку |
 | `emr_append_to_note` | "add to the note" | Дополняет текущую заметку надиктованным текстом |
 | `emr_save_clinical_note` | "save the note" | Сохраняет текущую заметку |

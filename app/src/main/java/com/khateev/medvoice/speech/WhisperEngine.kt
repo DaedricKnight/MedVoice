@@ -19,9 +19,15 @@ class WhisperEngine(private val context: Context) {
 
     private var ctxPtr: Long = 0
 
+    /** Which model is currently loaded (fast base.en vs accuracy small.en). */
+    @Volatile
+    var accuracyMode: Boolean = false
+        private set
+
     companion object {
         private const val TAG = "WhisperEngine"
-        private const val MODEL_ASSET = "ggml-base.en-q5_1.bin"
+        private const val MODEL_BASE = "ggml-base.en-q5_1.bin"
+        private const val MODEL_SMALL = "ggml-small.en-q5_1.bin"
         const val SAMPLE_RATE = 16_000
 
         /** Whisper's initial prompt biases decoding toward the clinical vocabulary.
@@ -49,20 +55,29 @@ class WhisperEngine(private val context: Context) {
         }
     }
 
-    suspend fun initialize(): Result<Unit> = withContext(Dispatchers.IO) {
+    /**
+     * Loads (or switches to) the requested model. Accuracy mode uses small.en
+     * (~181 MB, 2-4x slower, noticeably better on hard accents); fast mode uses
+     * base.en. The old context is freed only after the new one loads.
+     */
+    suspend fun initialize(useAccuracyModel: Boolean = false): Result<Unit> = withContext(Dispatchers.IO) {
+        val asset = if (useAccuracyModel) MODEL_SMALL else MODEL_BASE
         try {
-            val modelFile = File(context.filesDir, MODEL_ASSET)
-            val assetSize = context.assets.openFd(MODEL_ASSET).use { it.length }
+            val modelFile = File(context.filesDir, asset)
+            val assetSize = context.assets.openFd(asset).use { it.length }
             if (!modelFile.exists() || modelFile.length() != assetSize) {
-                context.assets.open(MODEL_ASSET).use { input ->
+                context.assets.open(asset).use { input ->
                     modelFile.outputStream().use { output -> input.copyTo(output) }
                 }
             }
-            ctxPtr = nativeInit(modelFile.absolutePath)
-            if (ctxPtr == 0L) {
-                Result.failure(IllegalStateException("whisper_init failed"))
+            val newPtr = nativeInit(modelFile.absolutePath)
+            if (newPtr == 0L) {
+                Result.failure(IllegalStateException("whisper_init failed for $asset"))
             } else {
-                Log.d(TAG, "Whisper base.en-q5_1 initialized")
+                if (ctxPtr != 0L) nativeFree(ctxPtr)
+                ctxPtr = newPtr
+                accuracyMode = useAccuracyModel
+                Log.d(TAG, "Whisper initialized: $asset")
                 Result.success(Unit)
             }
         } catch (e: Exception) {

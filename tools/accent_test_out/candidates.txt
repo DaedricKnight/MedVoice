@@ -1,0 +1,121 @@
+[28/364]
+[56/364]
+[84/364]
+[112/364]
+[140/364]
+[168/364]
+[196/364]
+[224/364]
+[252/364]
+[280/364]
+[308/364]
+[336/364]
+[364/364]
+
+=== PASS RATE per phrase (7 accents x 4 conditions = 28 clips each) ===
+ 19/28   68%  'open patient chart for jane roe'
+ 21/28   75%  'open patient record for jane roe'
+ 25/28   89%  'open patient file for jane roe'
+  2/28    7%  'undo'
+ 25/28   89%  'undo the last entry'
+ 27/28   96%  'scratch that'
+ 24/28   86%  'delete the last entry'
+ 18/28   64%  'confirm'
+ 27/28   96%  'yes confirm'
+ 25/28   89%  'affirmative'
+ 15/28   54%  'approve'
+ 18/28   64%  'cancel'
+ 27/28   96%  'negative'
+
+=== FAILURES (91) ===
+  'open patient chart for jane roe'      GB       180+n  heard: 'Open patient, charge for Jane Roe. Open patient, charge for Jane Roe.' -> gen_l
+  'open patient chart for jane roe'      IE       180+n  heard: 'Open patient, charge for Jane Roe.' -> gen_locate_colleague 0.99
+  'open patient chart for jane roe'      IN       180    heard: 'Open patient charge for Jane Roe.' -> gen_locate_colleague 0.99
+  'open patient chart for jane roe'      IN       220    heard: 'Open patient charge for Jane Roe.' -> gen_locate_colleague 0.99
+  'open patient chart for jane roe'      IN       180+n  heard: 'Open patient, charge for Jane Roe.' -> gen_locate_colleague 0.99
+  'open patient chart for jane roe'      ZA       180+n  heard: 'Open patient, charge for Jane Roe.' -> gen_locate_colleague 0.99
+  'open patient chart for jane roe'      GB-aged  140    heard: 'Open patient, shot for Jane Roe.' -> or_capture_photo 0.70
+  'open patient chart for jane roe'      GB-aged  180    heard: 'Open patient, charge for Jane Roe. Open patient, charge for Jane Roe.' -> gen_l
+  'open patient chart for jane roe'      GB-aged  220    heard: 'Open patient, charge for Jane Roe. Open patient, charge for Jane Roe.' -> gen_l
+  'open patient record for jane roe'     US       180+n  heard: 'OpenTations record for Jane Roe.' -> guide_mi_protocol 0.27
+  'open patient record for jane roe'     GB       180+n  heard: 'Open patient, record full Jane Roe. Open patient, record full Jane Roe.' -> emr
+  'open patient record for jane roe'     AU       180+n  heard: 'Both patients record for Jane Roe.' -> emrgy_start_triage 0.99
+  'open patient record for jane roe'     IN       180+n  heard: 'Open patient records for Jane Roe.' -> emr_search_patient_records 0.97
+  'open patient record for jane roe'     ZA       180+n  heard: 'Open patients recall for Jane Roe.' -> emrgy_start_triage 0.89
+  'open patient record for jane roe'     GB-aged  220    heard: 'Open patient records for Jane Roe.' -> emr_search_patient_records 0.97
+  'open patient record for jane roe'     GB-aged  180+n  heard: 'Open stations medical for Jane Roe.' -> ward_lights_on 0.61
+  'open patient file for jane roe'       US       180+n  heard: 'OpenTation file for Jane Roe.' -> emr_search_patient_records 0.94
+  'open patient file for jane roe'       GB       180+n  heard: "OpenTation's file for Jane Roe." -> emr_search_patient_records 0.95
+  'open patient file for jane roe'       AU       180+n  heard: 'Both patients filed for Jane Roe.' -> med_prescribe_medication 0.99
+  'undo'                                 US       140    heard: John Doe.
+  'undo'                                 US       180    heard: John Doe
+  'undo'                                 US       220    heard: John Doe.
+  'undo'                                 US       180+n  heard: John Doe.
+  'undo'                                 GB       140    heard: Ando.
+  'undo'                                 GB       180    heard: Ando.
+  'undo'                                 GB       220    heard: Ando.
+  'undo'                                 GB       180+n  heard: Thunder.
+  'undo'                                 AU       140    heard: John Doe.
+  'undo'                                 AU       180    heard: John Doe.
+  'undo'                                 AU       220    heard: John Doe.
+  'undo'                                 AU       180+n  heard: John Doe.
+  'undo'                                 IE       140    heard: John Doe.
+  'undo'                                 IE       180    heard: John Doe.
+  'undo'                                 IE       220    heard: John Doe.
+  'undo'                                 IE       180+n  heard: John Doe.
+  'undo'                                 IN       220    heard: Ando.
+  'undo'                                 IN       180+n  heard: John Doe.
+  'undo'                                 ZA       140    heard: On Do.
+  'undo'                                 ZA       180    heard: On Do.
+  'undo'                                 ZA       220    heard: John Doe.
+  'undo'                                 ZA       180+n  heard: I'm you.
+  'undo'                                 GB-aged  140    heard: I do.
+  'undo'                                 GB-aged  180    heard: I do.
+  'undo'                                 GB-aged  220    heard: Doo, doo, doo, doo.
+  'undo'                                 GB-aged  180+n  heard: John Doe.
+  'undo the last entry'                  GB-aged  180    heard: 'Do the lost entry.' -> emr_create_clinical_note 0.25
+  'undo the last entry'                  GB-aged  220    heard: 'Do the lost entry.' -> emr_create_clinical_note 0.25
+  'undo the last entry'                  GB-aged  180+n  heard: 'A dude and log 10 feet.' -> gen_request_chaplain 0.74
+  'scratch that'                         AU       180+n  heard: Fresh bed.
+  'delete the last entry'                GB-aged  140    heard: 'They meet the most entry.' -> emr_save_clinical_note 0.68
+  'delete the last entry'                GB-aged  180    heard: 'The means of lost entry.' -> emr_save_clinical_note 0.71
+  'delete the last entry'                GB-aged  220    heard: 'The meats are lost entry.' -> med_log_administered 0.86
+  'delete the last entry'                GB-aged  180+n  heard: 'To meet the north entry.' -> emr_append_to_note 0.90
+  'confirm'                              GB       140    heard: Good concern.
+  'confirm'                              GB       220    heard: concern.
+  'confirm'                              GB       180+n  heard: Conferms.
+  'confirm'                              IN       140    heard: Welcome to the UK.
+  'confirm'                              IN       220    heard: Welcome to the channel.
+  'confirm'                              ZA       180+n  heard: Concerned.
+  'confirm'                              GB-aged  140    heard: Good for him.
+  'confirm'                              GB-aged  180    heard: Good luck and fam.
+  'confirm'                              GB-aged  220    heard: Good at them.
+  'confirm'                              GB-aged  180+n  heard: And then...
+  'yes confirm'                          GB-aged  180+n  heard: And yet can earn.
+  'affirmative'                          AU       180+n  heard: Confirmative.
+  'affirmative'                          GB-aged  140    heard: A formative.
+  'affirmative'                          GB-aged  180+n  heard: Family.
+  'approve'                              US       180+n  heard: A true.
+  'approve'                              GB       180    heard: Appro
+  'approve'                              GB       220    heard: Appro
+  'approve'                              AU       180+n  heard: Caproo.
+  'approve'                              IE       140    heard: The proves.
+  'approve'                              IE       180    heard: The Pruez.
+  'approve'                              IE       220    heard: Data proves.
+  'approve'                              IE       180+n  heard: Dr. Drew.
+  'approve'                              IN       180+n  heard: A few.
+  'approve'                              ZA       180+n  heard: A P.
+  'approve'                              GB-aged  180    heard: I pray.
+  'approve'                              GB-aged  220    heard: I'll prove.
+  'approve'                              GB-aged  180+n  heard: 
+  'cancel'                               GB       140    heard: Cancer, cancer.
+  'cancel'                               AU       140    heard: Pencil.
+  'cancel'                               AU       180    heard: Pencil.
+  'cancel'                               AU       220    heard: Pencil.
+  'cancel'                               AU       180+n  heard: Tensell.
+  'cancel'                               IE       180+n  heard: Cancer.
+  'cancel'                               IN       140    heard: Cancer
+  'cancel'                               IN       180+n  heard: Cancer, cancer, cancer.
+  'cancel'                               ZA       180+n  heard: Cancer.
+  'cancel'                               GB-aged  180+n  heard: Hand off.
+  'negative'                             GB-aged  180+n  heard: Negate.

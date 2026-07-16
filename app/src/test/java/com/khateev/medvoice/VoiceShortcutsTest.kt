@@ -25,8 +25,10 @@ class VoiceShortcutsTest {
         assertTrue(VoiceShortcuts.isCancel("Cancel."))
         assertTrue(VoiceShortcuts.isCancel("No."))
         assertTrue(VoiceShortcuts.isCancel("never mind"))
+        assertTrue(VoiceShortcuts.isCancel("Negative."))
         // full sentences are intents, not shortcuts
         assertFalse(VoiceShortcuts.isCancel("cancel the appointment"))
+        assertFalse(VoiceShortcuts.isCancel("negative lab results"))
     }
 
     @Test

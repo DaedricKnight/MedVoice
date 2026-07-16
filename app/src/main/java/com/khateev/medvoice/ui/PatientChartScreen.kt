@@ -141,7 +141,7 @@ fun PatientChartScreen(
                     Text("Heard: \"${pending.rawText}\"", color = Color.Gray)
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "🎤 say \"confirm\" or \"cancel\"",
+                        "🎤 say \"yes, confirm\" or \"negative\"",
                         color = MaterialTheme.colorScheme.secondary,
                         fontSize = 14.sp
                     )
@@ -413,6 +413,16 @@ private fun CommandPanel(
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f)
                 )
+                TextButton(onClick = { viewModel.toggleAccuracyMode() }, enabled = !state.switchingModel) {
+                    Text(
+                        when {
+                            state.switchingModel -> "…"
+                            state.accuracyMode -> "🎯"
+                            else -> "⚡"
+                        },
+                        fontSize = 16.sp
+                    )
+                }
                 TextButton(onClick = { viewModel.toggleTts() }) {
                     Text(if (state.ttsMuted) "🔇" else "🔊", fontSize = 16.sp)
                 }

@@ -22,3 +22,6 @@ third_party/whisper.cpp/build-host/
 
 # Logs
 *.log
+
+# Large models above GitHub's 100 MB limit — fetch with tools/fetch_models.sh
+app/src/main/assets/ggml-small.en-q5_1.bin

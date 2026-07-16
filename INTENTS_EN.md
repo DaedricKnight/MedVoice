@@ -15,9 +15,9 @@ hospital system).
 
 | Intent | Example | Description |
 |---|---|---|
-| `emr_open_patient_chart` | "open patient chart for Jane Roe", "switch to patient" | Opens a patient's chart; with a name, switches directly to that patient, otherwise shows the patient list |
+| `emr_open_patient_chart` | "open patient **file** for Jane Roe" (accent-robust), "open patient chart for…", "switch to patient" | Opens a patient's chart; with a name, switches directly to that patient, otherwise shows the patient list |
 | `emr_add_patient` | "add a new patient" | Opens the new-patient form (name, MRN, ward) |
-| `emr_undo_last` | "undo the last entry" | Deletes the last recorded vital (same as the spoken "undo" shortcut, but catches longer phrasings) |
+| `emr_undo_last` | "**scratch that**" (accent-robust shortcut), "undo the last entry" | Deletes the last recorded vital (same as the spoken "undo" shortcut, but catches longer phrasings) |
 | `emr_create_clinical_note` | "create a new clinical note" | Starts a new clinical note |
 | `emr_append_to_note` | "add to the note" | Appends dictated text to the current note |
 | `emr_save_clinical_note` | "save the note" | Saves the current clinical note |

@@ -18,7 +18,9 @@ object VoiceShortcuts {
     )
 
     private val CANCEL = setOf(
-        "cancel", "no", "no cancel", "cancel it", "abort", "dismiss", "never mind", "nevermind"
+        "cancel", "no", "no cancel", "cancel it", "abort", "dismiss", "never mind", "nevermind",
+        // accent-robust canonical form: 96% cross-accent vs 64% for bare "cancel"
+        "negative"
     )
 
     private val UNDO = setOf(
