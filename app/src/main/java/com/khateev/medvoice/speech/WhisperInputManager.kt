@@ -36,6 +36,7 @@ class WhisperInputManager(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val running = AtomicBoolean(false)
+    private val transcribing = AtomicBoolean(false)
     private var audioThread: Thread? = null
     @Volatile
     private var prompt: String = WhisperEngine.MEDICAL_PROMPT
@@ -174,14 +175,27 @@ class WhisperInputManager(
     }
 
     private fun transcribeAsync(pcm: FloatArray) {
+        // One transcription at a time. Whisper is serialized in the engine, but
+        // launching a coroutine per utterance let rapid repeats ("yes confirm"
+        // said several times) pile up and starve the dispatcher pool. Drop new
+        // utterances while one is decoding — in command mode the user just
+        // repeats, and this keeps the app responsive.
+        if (!transcribing.compareAndSet(false, true)) {
+            Log.d(TAG, "Dropped utterance: transcription already in progress")
+            return
+        }
         scope.launch {
-            onStatus("Transcribing…")
-            val text = engine.transcribe(pcm, prompt)
-            Log.d(TAG, "Transcript (${pcm.size / 16000.0}s audio): \"$text\"")
-            if (text.isNotBlank()) {
-                onResult(text)
-            } else {
-                onStatus("(no speech recognized)")
+            try {
+                onStatus("Transcribing…")
+                val text = engine.transcribe(pcm, prompt)
+                Log.d(TAG, "Transcript (${pcm.size / 16000.0}s audio): \"$text\"")
+                if (text.isNotBlank()) {
+                    onResult(text)
+                } else {
+                    onStatus("(no speech recognized)")
+                }
+            } finally {
+                transcribing.set(false)
             }
         }
     }

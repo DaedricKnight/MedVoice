@@ -19,6 +19,15 @@ class WhisperEngine(private val context: Context) {
 
     private var ctxPtr: Long = 0
 
+    /**
+     * whisper_context is NOT thread-safe: concurrent whisper_full calls on the
+     * same context (e.g. several dictated utterances arriving back-to-back) or a
+     * free() racing an in-flight transcribe corrupt ggml's scratch buffers and
+     * crash in ggml_compute_forward_mul_mat. All native context work is
+     * serialized through this lock.
+     */
+    private val nativeLock = Any()
+
     /** Which model is currently loaded (fast base.en vs accuracy small.en). */
     @Volatile
     var accuracyMode: Boolean = false
@@ -74,8 +83,12 @@ class WhisperEngine(private val context: Context) {
             if (newPtr == 0L) {
                 Result.failure(IllegalStateException("whisper_init failed for $asset"))
             } else {
-                if (ctxPtr != 0L) nativeFree(ctxPtr)
-                ctxPtr = newPtr
+                // Swap contexts under the lock so a transcribe in flight never
+                // sees a freed pointer.
+                synchronized(nativeLock) {
+                    if (ctxPtr != 0L) nativeFree(ctxPtr)
+                    ctxPtr = newPtr
+                }
                 accuracyMode = useAccuracyModel
                 Log.d(TAG, "Whisper initialized: $asset")
                 Result.success(Unit)
@@ -98,14 +111,21 @@ class WhisperEngine(private val context: Context) {
                 FloatArray(pcm.size + TAIL_SILENCE).also { pcm.copyInto(it) }
             }
             val threads = Runtime.getRuntime().availableProcessors().coerceIn(2, 4)
-            val raw = nativeTranscribe(ctxPtr, padded, prompt, threads).trim()
+            // Serialize: only one whisper_full may run on the context at a time,
+            // and it cannot overlap a model swap or close.
+            val raw = synchronized(nativeLock) {
+                if (ctxPtr == 0L) return@synchronized ""
+                nativeTranscribe(ctxPtr, padded, prompt, threads)
+            }.trim()
             TranscriptCleaner.collapseRepetitions(TranscriptCleaner.stripNonSpeech(raw))
         }
 
     fun close() {
-        if (ctxPtr != 0L) {
-            nativeFree(ctxPtr)
-            ctxPtr = 0
+        synchronized(nativeLock) {
+            if (ctxPtr != 0L) {
+                nativeFree(ctxPtr)
+                ctxPtr = 0
+            }
         }
     }
 
