@@ -112,5 +112,5 @@
     "ward_unlock_doors"
   ],
   "model_type": "bert",
-  "best_val_accuracy": 0.9951
+  "best_val_accuracy": 0.9968
 }
