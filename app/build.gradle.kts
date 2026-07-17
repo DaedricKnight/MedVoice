@@ -7,7 +7,6 @@ plugins {
 
 android {
     namespace = "com.khateev.medvoice"
-    ndkVersion = "27.1.12297006"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -22,24 +21,6 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        ndk {
-            abiFilters.addAll(listOf("arm64-v8a", "x86_64"))
-        }
-
-        externalNativeBuild {
-            cmake {
-                arguments += listOf("-DGGML_OPENMP=OFF")
-                cppFlags += "-std=c++17"
-            }
-        }
-    }
-
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.22.1"
-        }
     }
 
     buildTypes {
@@ -67,11 +48,13 @@ android {
 }
 
 dependencies {
+    // ASR/VAD/intent-classification engine (whisper.cpp JNI + ONNX Runtime)
+    api(project(":voice-core"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.onnxruntime.android)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)

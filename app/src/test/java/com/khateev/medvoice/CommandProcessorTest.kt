@@ -1,0 +1,186 @@
+/**
+ * Copyright (c) 2026 Artem Khateev. All rights reserved.
+ * Proprietary and confidential.
+ * Unauthorized copying of this file, via any medium is strictly prohibited.
+ */
+package com.khateev.medvoice
+
+import com.khateev.medvoice.domain.CommandOutcome
+import com.khateev.medvoice.domain.CommandProcessor
+import com.khateev.medvoice.domain.IntentClassifierPort
+import com.khateev.medvoice.domain.IntentResult
+import com.khateev.medvoice.ml.PatientMatcher
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/**
+ * Pure-JVM tests of the whole command pipeline with the classifier faked out:
+ * every gate (pending confirmation, undo shortcut, confidence, none-class,
+ * critical intent) plus registry routing, without a device or an ONNX runtime.
+ */
+class CommandProcessorTest {
+
+    /** Returns a canned result; records what text the pipeline classified. */
+    private class FakeClassifier(
+        private val label: String? = null,
+        private val confidence: Float = 0.99f
+    ) : IntentClassifierPort {
+        var lastText: String? = null
+        override suspend fun classify(text: String): IntentResult? {
+            lastText = text
+            return label?.let { IntentResult(it, confidence, "none", 1f - confidence) }
+        }
+    }
+
+    private val patients = listOf(
+        PatientMatcher.Candidate(1, "John Doe"),
+        PatientMatcher.Candidate(2, "Jane Roe")
+    )
+
+    private fun outcome(
+        text: String,
+        classifier: FakeClassifier,
+        pending: Boolean = false
+    ): CommandOutcome = runBlocking {
+        CommandProcessor(classifier).process(text, patients, hasPendingAction = pending).outcome
+    }
+
+    // --- Input and dialog gates ---
+
+    @Test
+    fun blankInput_isIgnored() {
+        assertEquals(CommandOutcome.Ignored, outcome("   ", FakeClassifier()))
+    }
+
+    @Test
+    fun pendingAction_capturesDialog_untilConfirmedOrCancelled() {
+        val classifier = FakeClassifier("emrgy_call_code_blue")
+        assertEquals(CommandOutcome.ConfirmPending, outcome("yes, confirm", classifier, pending = true))
+        assertEquals(CommandOutcome.CancelPending, outcome("negative", classifier, pending = true))
+        // Anything else — even a valid command — must not leak through the gate
+        assertEquals(CommandOutcome.AwaitConfirmation, outcome("heart rate 72", classifier, pending = true))
+        assertNull("classifier must not run while confirmation is pending", classifier.lastText)
+    }
+
+    @Test
+    fun repeatedConfirm_isStillJustConfirmPending() {
+        val classifier = FakeClassifier()
+        repeat(5) {
+            assertEquals(CommandOutcome.ConfirmPending, outcome("yes confirm", classifier, pending = true))
+        }
+    }
+
+    @Test
+    fun scratchThat_triggersUndo_withoutClassification() {
+        val classifier = FakeClassifier("vitals_log_heart_rate")
+        assertEquals(CommandOutcome.UndoRequested, outcome("scratch that", classifier))
+        assertNull(classifier.lastText)
+    }
+
+    // --- Classifier gates ---
+
+    @Test
+    fun nullClassifierResult_reportsNotReady() {
+        assertEquals(CommandOutcome.ClassifierNotReady, outcome("heart rate 72", FakeClassifier(label = null)))
+    }
+
+    @Test
+    fun lowConfidence_isRejected() {
+        val result = outcome("do the thing", FakeClassifier("vitals_log_heart_rate", confidence = 0.60f))
+        assertTrue(result is CommandOutcome.Rejected)
+        assertEquals(0.60f, (result as CommandOutcome.Rejected).confidence)
+    }
+
+    @Test
+    fun noneClass_isRejected_evenAtFullConfidence() {
+        val result = outcome("play some music", FakeClassifier("none", confidence = 1.0f))
+        assertTrue(result is CommandOutcome.Rejected)
+    }
+
+    @Test
+    fun criticalIntent_requiresConfirmation_insteadOfExecuting() {
+        val result = outcome("call code blue", FakeClassifier("emrgy_call_code_blue"))
+        assertTrue(result is CommandOutcome.RequestConfirmation)
+        result as CommandOutcome.RequestConfirmation
+        assertEquals("emrgy_call_code_blue", result.intent)
+        assertEquals("CALL CODE BLUE", result.description)
+    }
+
+    // --- Vitals routing ---
+
+    @Test
+    fun bloodPressure_normalValue_recordsWithoutAlert() {
+        val result = outcome("blood pressure 120 over 80", FakeClassifier("vitals_log_blood_pressure"))
+        assertTrue(result is CommandOutcome.VitalRecorded)
+        result as CommandOutcome.VitalRecorded
+        assertEquals(VitalType.BLOOD_PRESSURE, result.type)
+        assertEquals("120/80", result.value)
+        assertNull("120/80 must not raise a clinical alert", result.alert)
+    }
+
+    @Test
+    fun spokenNumbers_areNormalizedBeforeExtraction() {
+        val result = outcome(
+            "blood pressure one twenty over eighty",
+            FakeClassifier("vitals_log_blood_pressure")
+        )
+        assertEquals("120/80", (result as CommandOutcome.VitalRecorded).value)
+    }
+
+    @Test
+    fun oxygenSaturation_criticalValue_carriesAlert() {
+        val result = outcome("oxygen saturation 82 percent", FakeClassifier("vitals_log_oxygen_saturation"))
+        assertTrue(result is CommandOutcome.VitalRecorded)
+        result as CommandOutcome.VitalRecorded
+        assertEquals("82", result.value)
+        assertNotNull("SpO2 82 must raise a clinical alert", result.alert)
+    }
+
+    @Test
+    fun vitalCommandWithoutValue_asksToRepeat() {
+        val result = outcome("log the heart rate", FakeClassifier("vitals_log_heart_rate"))
+        assertTrue(result is CommandOutcome.VitalValueMissing)
+    }
+
+    // --- Patients ---
+
+    @Test
+    fun openChartWithKnownName_switchesPatient() {
+        val classifier = FakeClassifier("emr_open_patient_chart")
+        val result = outcome("open the file for jane roe", classifier)
+        assertEquals(CommandOutcome.SwitchPatient(2), result)
+        // The dynamic name must be stripped before hitting the model
+        assertEquals(false, classifier.lastText!!.contains("jane", ignoreCase = true))
+    }
+
+    @Test
+    fun openChartWithoutName_showsPicker() {
+        val result = outcome("open the patient file", FakeClassifier("emr_open_patient_chart"))
+        assertTrue(result is CommandOutcome.ShowPatientPicker)
+    }
+
+    @Test
+    fun addPatient_opensForm() {
+        val result = outcome("add a new patient", FakeClassifier("emr_add_patient"))
+        assertTrue(result is CommandOutcome.ShowAddPatient)
+    }
+
+    // --- Registry fallbacks ---
+
+    @Test
+    fun symptomPrefix_logsSymptomName() {
+        val result = outcome("patient reports fever", FakeClassifier("symptom_log_fever"))
+        assertEquals("fever", (result as CommandOutcome.SymptomLogged).symptom)
+    }
+
+    @Test
+    fun unmappedIntent_fallsBackToGenericExecution() {
+        val result = outcome("order a chest x-ray", FakeClassifier("lab_order_chest_xray"))
+        assertTrue(result is CommandOutcome.GenericExecuted)
+        assertEquals("lab_order_chest_xray", (result as CommandOutcome.GenericExecuted).label)
+    }
+}

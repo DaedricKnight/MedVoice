@@ -14,11 +14,10 @@ import androidx.lifecycle.viewModelScope
 import com.khateev.medvoice.data.AuditEntity
 import com.khateev.medvoice.data.ChartDatabase
 import com.khateev.medvoice.data.ChartRepository
-import com.khateev.medvoice.ml.IntentResult
+import com.khateev.medvoice.domain.CommandOutcome
+import com.khateev.medvoice.domain.CommandProcessor
 import com.khateev.medvoice.ml.MedIntentClassifier
 import com.khateev.medvoice.ml.PatientMatcher
-import com.khateev.medvoice.ml.VitalsExtractor
-import com.khateev.medvoice.ml.VoiceShortcuts
 import com.khateev.medvoice.speech.WhisperEngine
 import com.khateev.medvoice.speech.WhisperInputManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -94,6 +93,7 @@ data class ChartUiState(
 class ChartViewModel(application: Application) : AndroidViewModel(application) {
 
     private val classifier = MedIntentClassifier(application)
+    private val commandProcessor = CommandProcessor(classifier)
     private val repository = ChartRepository(ChartDatabase.get(application))
     private val prefs = application.getSharedPreferences("medvoice", Context.MODE_PRIVATE)
 
@@ -117,22 +117,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
     private var ttsReady = false
 
     companion object {
-        /**
-         * Below this softmax confidence the command is rejected and the user is
-         * asked to repeat. On out-of-domain phrases the model's wrong answers
-         * cluster at 40-60% confidence while correct ones are at 99-100%.
-         */
-        const val CONFIDENCE_THRESHOLD = 0.85f
-
         private const val PREF_LAST_PATIENT = "last_patient_id"
-
-        /** Intents with clinical consequences: never executed without on-screen confirmation. */
-        private val CRITICAL_INTENTS = setOf(
-            "med_prescribe_medication", "med_stop_medication", "med_adjust_dosage",
-            "med_order_iv_fluids", "med_refill_prescription",
-            "staff_discharge_patient", "staff_transfer_patient_icu", "staff_transfer_patient_ward",
-            "emr_sign_document", "ward_unlock_doors", "emrgy_call_code_blue"
-        )
     }
 
     init {
@@ -411,75 +396,92 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- Commands ---
 
+    /**
+     * All decisions are made by the pure [CommandProcessor]; this method only
+     * renders the resulting [CommandOutcome] into side effects (DB, TTS, state).
+     */
     fun onCommand(rawText: String) {
-        // Spoken numbers ("thirty seven point five") are out of the model's training
-        // distribution and tank its confidence; digits are handled fine. Normalize first.
-        val text = VitalsExtractor.normalizeNumbers(rawText.trim())
-        if (text.isEmpty()) return
-
-        // A pending critical action captures the dialog: only confirm/cancel pass.
-        if (_uiState.value.pendingAction != null) {
-            when {
-                VoiceShortcuts.isConfirm(text) -> confirmPendingAction()
-                VoiceShortcuts.isCancel(text) -> dismissPendingAction()
-                else -> {
-                    addLog("Waiting for confirmation — say \"yes confirm\" or \"negative\"", null, null, LogKind.WARN)
-                    speak("Say yes confirm, or negative")
-                }
-            }
-            return
-        }
-
-        if (VoiceShortcuts.isUndo(text)) {
-            undoLastVital()
-            return
-        }
-
         viewModelScope.launch {
-            val start = System.currentTimeMillis()
-            // The v2 model understands numbers/decimals natively; only patient
-            // names (dynamic, unknown at training time) are stripped before
-            // classification and matched from the full text afterwards.
             val candidates = _uiState.value.patients.map { PatientMatcher.Candidate(it.id, it.name) }
-            val result = classifier.classify(
-                PatientMatcher.stripNames(VitalsExtractor.sanitizeForClassification(text), candidates)
+            val processed = commandProcessor.process(
+                rawText = rawText,
+                patients = candidates,
+                hasPendingAction = _uiState.value.pendingAction != null
             )
-            val elapsed = System.currentTimeMillis() - start
-            _uiState.update { it.copy(lastInferenceMs = elapsed, partialText = "") }
+            processed.inferenceMs?.let { ms ->
+                _uiState.update { it.copy(lastInferenceMs = ms, partialText = "") }
+            }
+            render(processed.outcome)
+        }
+    }
 
-            if (result == null) {
-                addLog("Model is not ready", null, null, LogKind.ERROR)
-                return@launch
+    private fun render(outcome: CommandOutcome) {
+        when (outcome) {
+            CommandOutcome.Ignored -> Unit
+
+            CommandOutcome.ConfirmPending -> confirmPendingAction()
+            CommandOutcome.CancelPending -> dismissPendingAction()
+            CommandOutcome.AwaitConfirmation -> {
+                addLog("Waiting for confirmation — say \"yes confirm\" or \"negative\"", null, null, LogKind.WARN)
+                speak("Say yes confirm, or negative")
             }
 
-            // "none" is the model's explicit out-of-domain class (small talk,
-            // background speech) — same outcome as low confidence: re-prompt.
-            if (result.label == "none" || result.confidence < CONFIDENCE_THRESHOLD) {
+            CommandOutcome.UndoRequested -> undoLastVital()
+
+            CommandOutcome.ClassifierNotReady ->
+                addLog("Model is not ready", null, null, LogKind.ERROR)
+
+            is CommandOutcome.Rejected -> {
                 addLog(
-                    "Not sure what you meant by \"$text\" — please rephrase",
-                    result.label, result.confidence, LogKind.WARN, text
+                    "Not sure what you meant by \"${outcome.text}\" — please rephrase",
+                    outcome.label, outcome.confidence, LogKind.WARN, outcome.text
                 )
                 speak("Please rephrase")
-                return@launch
             }
 
-            if (result.label in CRITICAL_INTENTS) {
-                val description = describeIntent(result.label)
+            is CommandOutcome.RequestConfirmation -> {
                 _uiState.update {
-                    it.copy(
-                        pendingAction = PendingAction(
-                            intent = result.label,
-                            description = description,
-                            rawText = text
-                        )
-                    )
+                    it.copy(pendingAction = PendingAction(outcome.intent, outcome.description, outcome.rawText))
                 }
-                // "yes confirm"/"negative" survive accents (96%) far better than bare words
-                speak("$description. Say yes confirm, or negative")
-                return@launch
+                // "yes confirm"/"negative" survive accents far better than bare words
+                speak("${outcome.description}. Say yes confirm, or negative")
             }
 
-            execute(result, text)
+            is CommandOutcome.VitalRecorded -> {
+                setVital(outcome.type, outcome.value)
+                addLog(outcome.logMessage, outcome.label, outcome.confidence, LogKind.OK, outcome.rawText)
+                if (outcome.alert != null) {
+                    addLog("⚠ ${outcome.alert.message}", outcome.label, null, LogKind.WARN, outcome.rawText)
+                    // "scratch that" is the accent-robust undo phrase (96% vs 7% for "undo")
+                    speak("Warning. ${outcome.alert.message}. Say scratch that if this is a mistake")
+                } else {
+                    speak(outcome.spokenOk)
+                }
+            }
+
+            is CommandOutcome.VitalValueMissing -> {
+                addLog(outcome.logMessage, outcome.label, outcome.confidence, LogKind.WARN, outcome.rawText)
+                speak("No valid value, repeat with the number")
+            }
+
+            is CommandOutcome.SwitchPatient -> selectPatient(outcome.patientId)
+
+            is CommandOutcome.ShowPatientPicker -> {
+                openPatientPicker()
+                addLog("Patient list opened", outcome.label, outcome.confidence, LogKind.OK)
+            }
+
+            is CommandOutcome.ShowAddPatient -> {
+                openAddPatient()
+                addLog("New patient form opened", outcome.label, outcome.confidence, LogKind.OK, outcome.rawText)
+                speak("Adding a new patient")
+            }
+
+            is CommandOutcome.SymptomLogged ->
+                addLog("Symptom logged: ${outcome.symptom}", outcome.label, outcome.confidence, LogKind.OK)
+
+            is CommandOutcome.GenericExecuted ->
+                addLog(outcome.description, outcome.label, outcome.confidence, LogKind.OK)
         }
     }
 
@@ -495,122 +497,6 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(pendingAction = null) }
         addLog("Cancelled: ${pending.description}", pending.intent, null, LogKind.INFO, pending.rawText)
         speak("Cancelled")
-    }
-
-    private fun execute(result: IntentResult, text: String) {
-        val label = result.label
-        when {
-            label == "emr_add_patient" -> {
-                openAddPatient()
-                addLog("New patient form opened", label, result.confidence, LogKind.OK, text)
-                speak("Adding a new patient")
-            }
-            label == "emr_undo_last" -> undoLastVital()
-            label == "emr_open_patient_chart" || label == "emr_search_patient_records" -> {
-                val candidates = _uiState.value.patients.map { PatientMatcher.Candidate(it.id, it.name) }
-                val matched = PatientMatcher.match(text, candidates)
-                if (matched != null) {
-                    selectPatient(matched.id) // logs "Opened chart: ..."
-                } else {
-                    openPatientPicker()
-                    addLog("Patient list opened", label, result.confidence, LogKind.OK)
-                }
-            }
-            label == "vitals_log_blood_pressure" -> {
-                val bp = VitalsExtractor.extractBloodPressure(text)
-                if (bp != null) {
-                    recordVital(
-                        VitalType.BLOOD_PRESSURE, "${bp.systolic}/${bp.diastolic}",
-                        "Blood pressure recorded: ${bp.systolic}/${bp.diastolic} mmHg",
-                        "Blood pressure ${bp.systolic} over ${bp.diastolic} recorded",
-                        result, text
-                    )
-                } else {
-                    addLog("Blood pressure command recognized, but no valid value — say e.g. \"blood pressure 120 over 80\"", label, result.confidence, LogKind.WARN, text)
-                    speak("No valid value, repeat with the number")
-                }
-            }
-            label == "vitals_log_heart_rate" -> logNumericVital(
-                VitalType.HEART_RATE, VitalsExtractor.extractHeartRate(text)?.toString(), result, text
-            )
-            label == "vitals_log_temperature" -> logNumericVital(
-                VitalType.TEMPERATURE, VitalsExtractor.extractTemperature(text)?.let(::formatNumber), result, text
-            )
-            label == "vitals_log_oxygen_saturation" -> logNumericVital(
-                VitalType.OXYGEN_SATURATION, VitalsExtractor.extractOxygenSaturation(text)?.toString(), result, text
-            )
-            label == "vitals_log_respiratory_rate" -> logNumericVital(
-                VitalType.RESPIRATORY_RATE, VitalsExtractor.extractRespiratoryRate(text)?.toString(), result, text
-            )
-            label == "vitals_log_weight" -> logNumericVital(
-                VitalType.WEIGHT, VitalsExtractor.extractWeight(text)?.let(::formatNumber), result, text
-            )
-            label == "symptom_log_pain_level" -> {
-                val pain = VitalsExtractor.extractPainLevel(text)
-                if (pain != null) {
-                    recordVital(
-                        VitalType.PAIN_LEVEL, pain.toString(),
-                        "Pain level recorded: $pain/10",
-                        "Pain level $pain recorded",
-                        result, text
-                    )
-                } else {
-                    addLog("Pain level command recognized, but no value 0-10 found", label, result.confidence, LogKind.WARN, text)
-                    speak("No valid value, repeat with the number")
-                }
-            }
-            label.startsWith("symptom_log_") -> {
-                val symptom = label.removePrefix("symptom_log_").replace('_', ' ')
-                addLog("Symptom logged: $symptom", label, result.confidence, LogKind.OK)
-            }
-            else -> addLog(describeIntent(label), label, result.confidence, LogKind.OK)
-        }
-    }
-
-    private fun logNumericVital(type: VitalType, value: String?, result: IntentResult, text: String) {
-        if (value != null) {
-            recordVital(
-                type, value,
-                "${type.display} recorded: $value ${type.unit}",
-                "${ttsName(type)} $value recorded",
-                result, text
-            )
-        } else {
-            addLog("${type.display} command recognized, but no valid value in \"$text\" — repeat with the number", result.label, result.confidence, LogKind.WARN, text)
-            speak("No valid value, repeat with the number")
-        }
-    }
-
-    /**
-     * Records the value and runs clinical range validation: alarming values are
-     * still saved (data must not be lost), but flagged in the audit log and
-     * announced with an undo hint.
-     */
-    private fun recordVital(
-        type: VitalType,
-        value: String,
-        logMessage: String,
-        spokenOk: String,
-        result: IntentResult,
-        rawText: String
-    ) {
-        setVital(type, value)
-        addLog(logMessage, result.label, result.confidence, LogKind.OK, rawText)
-        val alert = VitalAlerts.assess(type, value)
-        if (alert != null) {
-            addLog("⚠ ${alert.message}", result.label, null, LogKind.WARN, rawText)
-            // "scratch that" is the accent-robust undo phrase (96% vs 7% for bare "undo")
-            speak("Warning. ${alert.message}. Say scratch that if this is a mistake")
-        } else {
-            speak(spokenOk)
-        }
-    }
-
-    /** Speech-friendly vital names ("SpO₂" is unreadable for TTS). */
-    private fun ttsName(type: VitalType): String = when (type) {
-        VitalType.OXYGEN_SATURATION -> "Oxygen saturation"
-        VitalType.RESPIRATORY_RATE -> "Respiratory rate"
-        else -> type.display
     }
 
     private fun setVital(type: VitalType, value: String) {
@@ -647,34 +533,6 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun formatTime(millis: Long): String =
         SimpleDateFormat("dd.MM HH:mm", Locale.US).format(Date(millis))
-
-    private fun formatNumber(value: Double): String =
-        if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
-
-    /** Human-readable summary per intent; generic fallback derived from the label. */
-    private fun describeIntent(label: String): String = when (label) {
-        "emr_open_patient_chart" -> "Patient chart opened"
-        "emr_create_clinical_note" -> "New clinical note created"
-        "emr_save_clinical_note" -> "Clinical note saved"
-        "emr_append_to_note" -> "Appended to clinical note"
-        "emr_add_allergy_warning" -> "Allergy warning added to chart"
-        "med_prescribe_medication" -> "Prescribe medication"
-        "med_stop_medication" -> "Stop medication"
-        "med_adjust_dosage" -> "Adjust medication dosage"
-        "med_order_iv_fluids" -> "Order IV fluids"
-        "med_refill_prescription" -> "Refill prescription"
-        "staff_discharge_patient" -> "Discharge patient"
-        "staff_transfer_patient_icu" -> "Transfer patient to ICU"
-        "staff_transfer_patient_ward" -> "Transfer patient to ward"
-        "emr_sign_document" -> "Sign document"
-        "ward_unlock_doors" -> "Unlock ward doors"
-        "emrgy_call_code_blue" -> "CALL CODE BLUE"
-        else -> label
-            .replace(Regex("^(emr|emrgy|vitals|symptom|med|lab|calc|ward|or|staff|guide|gen)_"), "")
-            .replace('_', ' ')
-            .replaceFirstChar { it.uppercase() }
-            .let { "Executed: $it" }
-    }
 
     override fun onCleared() {
         tts?.shutdown()

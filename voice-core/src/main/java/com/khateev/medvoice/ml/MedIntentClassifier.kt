@@ -10,24 +10,20 @@ import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.content.Context
 import android.util.Log
+import com.khateev.medvoice.domain.IntentClassifierPort
+import com.khateev.medvoice.domain.IntentResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.LongBuffer
 import kotlin.math.exp
 
-data class IntentResult(
-    val label: String,
-    val confidence: Float,
-    val secondLabel: String,
-    val secondConfidence: Float
-)
-
 /**
- * On-device intent classifier: quantized BERT-Tiny (INT8) over 106 medical intents.
- * Fully offline; inference takes single-digit milliseconds on tablet CPUs.
+ * On-device intent classifier: quantized BERT-Tiny (INT8) over the medical
+ * command set. Fully offline; single-digit milliseconds on tablet CPUs.
+ * Implements [IntentClassifierPort] so the domain never sees ONNX.
  */
-class MedIntentClassifier(private val context: Context) {
+class MedIntentClassifier(private val context: Context) : IntentClassifierPort {
 
     private var session: OrtSession? = null
     private var tokenizer: WordPieceTokenizer? = null
@@ -73,7 +69,7 @@ class MedIntentClassifier(private val context: Context) {
         }
     }
 
-    suspend fun classify(text: String): IntentResult? = withContext(Dispatchers.Default) {
+    override suspend fun classify(text: String): IntentResult? = withContext(Dispatchers.Default) {
         val currentSession = session ?: return@withContext null
         val currentTokenizer = tokenizer ?: return@withContext null
 

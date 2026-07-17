@@ -7,6 +7,7 @@ package com.khateev.medvoice
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.khateev.medvoice.domain.CommandProcessor
 import com.khateev.medvoice.ml.MedIntentClassifier
 import com.khateev.medvoice.ml.VitalsExtractor
 import com.khateev.medvoice.speech.SileroVad
@@ -81,7 +82,7 @@ class VoicePipelineTest {
         }
     }
 
-    private fun transcribeAndClassify(wav: String): Pair<String, com.khateev.medvoice.ml.IntentResult> =
+    private fun transcribeAndClassify(wav: String): Pair<String, com.khateev.medvoice.domain.IntentResult> =
         runBlocking {
             val text = whisper.transcribe(loadWavPcm("tts/$wav"))
             assertTrue("empty transcript for $wav", text.isNotBlank())
@@ -96,7 +97,7 @@ class VoicePipelineTest {
         assertEquals("wav=$wav text=\"$text\"", expectedIntent, result.label)
         assertTrue(
             "low confidence ${result.confidence} for $wav text=\"$text\"",
-            result.confidence >= ChartViewModel.CONFIDENCE_THRESHOLD
+            result.confidence >= CommandProcessor.DEFAULT_CONFIDENCE_THRESHOLD
         )
         return text
     }
@@ -164,7 +165,7 @@ class VoicePipelineTest {
         val (text, result) = transcribeAndClassify("ood_daniel.wav")
         assertTrue(
             "\"$text\" -> ${result.label} at ${result.confidence} would trigger a false action",
-            result.label == "none" || result.confidence < ChartViewModel.CONFIDENCE_THRESHOLD
+            result.label == "none" || result.confidence < CommandProcessor.DEFAULT_CONFIDENCE_THRESHOLD
         )
     }
 
@@ -187,7 +188,7 @@ class VoicePipelineTest {
         assertEquals("text=\"$text\"", "emr_open_patient_chart", result?.label)
         assertTrue(
             "low confidence ${result?.confidence} for \"$classifyText\"",
-            result!!.confidence >= ChartViewModel.CONFIDENCE_THRESHOLD
+            result!!.confidence >= CommandProcessor.DEFAULT_CONFIDENCE_THRESHOLD
         )
         val matched = com.khateev.medvoice.ml.PatientMatcher.match(normalized, patients)
         assertEquals("text=\"$text\"", 2L, matched?.id)
