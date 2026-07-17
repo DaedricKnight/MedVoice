@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
@@ -33,6 +34,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Without edge-to-edge, adjustResize consumes IME insets at the window
+        // level and Compose never sees isImeVisible — the keyboard-aware layout
+        // (hiding the vitals grid while typing) depends on it.
+        enableEdgeToEdge()
         setContent {
             MedVoiceTheme {
                 PatientChartScreen(

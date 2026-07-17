@@ -12,13 +12,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -74,6 +77,7 @@ import com.khateev.medvoice.News2
 import com.khateev.medvoice.NoteSection
 import com.khateev.medvoice.VitalType
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PatientChartScreen(
     viewModel: ChartViewModel,
@@ -82,6 +86,9 @@ fun PatientChartScreen(
     val state by viewModel.uiState.collectAsState()
     val isPortrait =
         LocalConfiguration.current.orientation != Configuration.ORIENTATION_LANDSCAPE
+    // With the keyboard open the screen shrinks to ~40%: hide the grid and the
+    // note so the command log and the input field stay visible while typing.
+    val imeVisible = WindowInsets.isImeVisible
 
     if (isPortrait) {
         Column(
@@ -93,11 +100,17 @@ fun PatientChartScreen(
         ) {
             PatientHeader(state, compact = true, onClick = { viewModel.openPatientPicker() })
             Spacer(Modifier.height(10.dp))
-            News2Card(state.news2)
-            Spacer(Modifier.height(10.dp))
-            VitalsGrid(state, columns = 2, onTileClick = { viewModel.openHistory(it) }, modifier = Modifier.weight(0.55f))
-            Spacer(Modifier.height(10.dp))
-            CommandPanel(state, viewModel, onDictateClick, modifier = Modifier.weight(0.45f))
+            if (!imeVisible) {
+                News2Card(state.news2)
+                Spacer(Modifier.height(10.dp))
+                VitalsGrid(state, columns = 2, onTileClick = { viewModel.openHistory(it) }, modifier = Modifier.weight(0.55f))
+                Spacer(Modifier.height(10.dp))
+            }
+            CommandPanel(
+                state, viewModel, onDictateClick,
+                showNote = !imeVisible,
+                modifier = Modifier.weight(if (imeVisible) 1f else 0.45f)
+            )
         }
     } else {
         Row(
@@ -117,6 +130,7 @@ fun PatientChartScreen(
             }
             CommandPanel(
                 state, viewModel, onDictateClick,
+                showNote = !imeVisible,
                 modifier = Modifier
                     .weight(0.38f)
                     .fillMaxHeight()
@@ -397,6 +411,7 @@ private fun CommandPanel(
     state: ChartUiState,
     viewModel: ChartViewModel,
     onDictateClick: (DictationMode) -> Unit,
+    showNote: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     var typed by remember { mutableStateOf("") }
@@ -408,12 +423,14 @@ private fun CommandPanel(
             .padding(12.dp)
             .fillMaxSize()) {
 
-            NoteCard(
-                state, noteActive,
-                onClear = { viewModel.clearNote() },
-                onSectionClick = { viewModel.setNoteSection(it) }
-            )
-            Spacer(Modifier.height(8.dp))
+            if (showNote) {
+                NoteCard(
+                    state, noteActive,
+                    onClear = { viewModel.clearNote() },
+                    onSectionClick = { viewModel.setNoteSection(it) }
+                )
+                Spacer(Modifier.height(8.dp))
+            }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
