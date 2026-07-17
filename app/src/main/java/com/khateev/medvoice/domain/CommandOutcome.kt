@@ -46,6 +46,18 @@ sealed interface CommandOutcome {
         val rawText: String
     ) : CommandOutcome
 
+    /**
+     * Confidence landed in the "did you mean" band (below the execute
+     * threshold but above the reject floor): offer the guess and execute it
+     * only if the user accepts. Non-critical intents only.
+     */
+    data class SuggestIntent(
+        val intent: String,
+        val description: String,
+        val rawText: String,
+        val confidence: Float
+    ) : CommandOutcome
+
     /** A vital parsed successfully; [alert] is non-null for alarming values. */
     data class VitalRecorded(
         val type: VitalType,
@@ -96,6 +108,10 @@ sealed interface CommandOutcome {
         val confidence: Float
     ) : CommandOutcome
 }
+
+/** True when the outcome opens a modal dialog awaiting a spoken yes/no answer. */
+val CommandOutcome.opensPendingDialog: Boolean
+    get() = this is CommandOutcome.RequestConfirmation || this is CommandOutcome.SuggestIntent
 
 /** Processor result: the outcome plus classifier latency (null on shortcut paths). */
 data class Processed(

@@ -153,10 +153,18 @@ fun PatientChartScreen(
     state.pendingAction?.let { pending ->
         AlertDialog(
             onDismissRequest = { viewModel.dismissPendingAction() },
-            title = { Text("Confirm action") },
+            title = { Text(if (pending.suggestion) "Did you mean?" else "Confirm action") },
             text = {
                 Column {
-                    Text(pending.description, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(
+                        if (pending.suggestion) pending.description.replaceFirstChar { it.uppercase() }
+                        else pending.description,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                    pending.confidence?.let {
+                        Text("best guess · ${"%.0f".format(it * 100)}% confidence", color = Color.Gray, fontSize = 13.sp)
+                    }
                     Spacer(Modifier.height(8.dp))
                     Text("Heard: \"${pending.rawText}\"", color = Color.Gray)
                     Spacer(Modifier.height(8.dp))
@@ -169,7 +177,7 @@ fun PatientChartScreen(
             },
             confirmButton = {
                 TextButton(onClick = { viewModel.confirmPendingAction() }) {
-                    Text("CONFIRM", fontWeight = FontWeight.Bold)
+                    Text(if (pending.suggestion) "YES" else "CONFIRM", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {

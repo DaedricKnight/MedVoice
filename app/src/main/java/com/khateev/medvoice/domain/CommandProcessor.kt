@@ -23,6 +23,7 @@ class CommandProcessor(
     private val classifier: IntentClassifierPort,
     private val registry: IntentRegistry = IntentRegistry.default(),
     private val confidenceThreshold: Float = DEFAULT_CONFIDENCE_THRESHOLD,
+    private val suggestionThreshold: Float = DEFAULT_SUGGESTION_THRESHOLD,
     private val criticalIntents: Set<String> = DEFAULT_CRITICAL_INTENTS
 ) {
 
@@ -53,7 +54,9 @@ class CommandProcessor(
         for ((index, segment) in segments.withIndex()) {
             val processed = process(segment, patients, hasPendingAction = false)
             results += processed
-            if (processed.outcome is CommandOutcome.RequestConfirmation) {
+            // Both a critical confirmation and a suggestion open a modal dialog:
+            // the rest of the utterance must wait for the user's answer.
+            if (processed.outcome.opensPendingDialog) {
                 return BatchResult(results, skipped = segments.lastIndex - index)
             }
         }
@@ -95,9 +98,27 @@ class CommandProcessor(
         if (result == null) return Processed(CommandOutcome.ClassifierNotReady, elapsed)
 
         // "none" is the explicit out-of-domain class (small talk, background
-        // speech) — same outcome as low confidence: re-prompt.
-        if (result.label == "none" || result.confidence < confidenceThreshold) {
+        // speech); below the suggestion floor the guess is worthless — reject.
+        if (result.label == "none" || result.confidence < suggestionThreshold) {
             return Processed(CommandOutcome.Rejected(text, result.label, result.confidence), elapsed)
+        }
+
+        // Suggestion band [suggestion, execute): confident enough to guess, not
+        // to act. Offer "did you mean …?" — but never fuzzy-suggest a critical
+        // action; those must be spoken clearly enough to cross the full gate.
+        if (result.confidence < confidenceThreshold) {
+            if (result.label in criticalIntents) {
+                return Processed(CommandOutcome.Rejected(text, result.label, result.confidence), elapsed)
+            }
+            return Processed(
+                CommandOutcome.SuggestIntent(
+                    intent = result.label,
+                    description = IntentDescriptions.suggestion(result.label),
+                    rawText = text,
+                    confidence = result.confidence
+                ),
+                elapsed
+            )
         }
 
         if (result.label in criticalIntents) {
@@ -114,6 +135,21 @@ class CommandProcessor(
         return Processed(registry.handle(IntentRequest(text, result, patients)), elapsed)
     }
 
+    /**
+     * Runs a suggestion the user accepted ("yes confirm" after "did you mean:
+     * record heart rate?") through the registry against the stored text, as if
+     * the guessed [intent] had classified with high confidence.
+     */
+    fun resolveConfirmed(
+        intent: String,
+        rawText: String,
+        confidence: Float,
+        patients: List<PatientMatcher.Candidate>
+    ): CommandOutcome {
+        val result = IntentResult(intent, confidence, secondLabel = "none", secondConfidence = 0f)
+        return registry.handle(IntentRequest(rawText, result, patients))
+    }
+
     companion object {
         /**
          * Below this softmax confidence the command is rejected and the user is
@@ -121,6 +157,12 @@ class CommandProcessor(
          * cluster at 40-60% confidence while correct ones are at 99-100%.
          */
         const val DEFAULT_CONFIDENCE_THRESHOLD = 0.85f
+
+        /**
+         * The "did you mean" floor: guesses in [this, threshold) are offered
+         * for confirmation instead of executed; below it they are rejected.
+         */
+        const val DEFAULT_SUGGESTION_THRESHOLD = 0.60f
 
         /** Intents with clinical consequences: never executed without confirmation. */
         val DEFAULT_CRITICAL_INTENTS = setOf(

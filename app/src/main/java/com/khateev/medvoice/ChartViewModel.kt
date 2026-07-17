@@ -56,7 +56,18 @@ data class LogEntry(
     val kind: LogKind
 )
 
-data class PendingAction(val intent: String, val description: String, val rawText: String)
+/**
+ * A modal action awaiting a spoken yes/no. [suggestion] distinguishes a
+ * "did you mean …?" guess (executed on confirm) from a critical-intent
+ * confirmation (only acknowledged — the prototype never executes those).
+ */
+data class PendingAction(
+    val intent: String,
+    val description: String,
+    val rawText: String,
+    val confidence: Float? = null,
+    val suggestion: Boolean = false
+)
 
 enum class DictationMode { COMMAND, NOTE }
 
@@ -460,7 +471,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
             if (isBatch) speakBatchSummary(batch)
             if (batch.skipped > 0) {
                 addLog(
-                    "${batch.skipped} command(s) after the critical one were skipped — confirm first, then repeat them",
+                    "${batch.skipped} command(s) after the one needing confirmation were skipped — answer first, then repeat them",
                     null, null, LogKind.WARN
                 )
             }
@@ -498,6 +509,26 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 // "yes confirm"/"negative" survive accents far better than bare words
                 speak("${outcome.description}. Say yes confirm, or negative")
+            }
+
+            is CommandOutcome.SuggestIntent -> {
+                _uiState.update {
+                    it.copy(
+                        pendingAction = PendingAction(
+                            intent = outcome.intent,
+                            description = outcome.description,
+                            rawText = outcome.rawText,
+                            confidence = outcome.confidence,
+                            suggestion = true
+                        )
+                    )
+                }
+                addLog(
+                    "Did you mean: ${outcome.description}? Say \"yes confirm\" or \"negative\"",
+                    outcome.intent, outcome.confidence, LogKind.WARN, outcome.rawText
+                )
+                // Interactive prompt — always spoken, even inside a batch.
+                speak("Did you mean, ${outcome.description}? Say yes confirm, or negative")
             }
 
             is CommandOutcome.VitalRecorded -> renderVitalRecorded(outcome, quiet)
@@ -613,6 +644,17 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
     fun confirmPendingAction() {
         val pending = _uiState.value.pendingAction ?: return
         _uiState.update { it.copy(pendingAction = null) }
+        if (pending.suggestion) {
+            // The user accepted the guess — run it now as a real command.
+            viewModelScope.launch {
+                val candidates = _uiState.value.patients.map { PatientMatcher.Candidate(it.id, it.name) }
+                val outcome = commandProcessor.resolveConfirmed(
+                    pending.intent, pending.rawText, pending.confidence ?: 0f, candidates
+                )
+                render(outcome)
+            }
+            return
+        }
         addLog("Confirmed: ${pending.description}", pending.intent, null, LogKind.OK, pending.rawText)
         speak("Confirmed")
     }

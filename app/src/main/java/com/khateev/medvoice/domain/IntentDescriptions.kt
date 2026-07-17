@@ -34,6 +34,25 @@ object IntentDescriptions {
             .let { "Executed: $it" }
     }
 
+    /**
+     * Natural imperative phrasing for a "Did you mean: …?" prompt — reads
+     * better than [describe]'s "Executed: Log heart rate". Falls back to the
+     * de-prefixed description for intents without an explicit phrase.
+     */
+    fun suggestion(label: String): String = when (label) {
+        "vitals_log_blood_pressure" -> "record blood pressure"
+        "vitals_log_heart_rate" -> "record heart rate"
+        "vitals_log_temperature" -> "record temperature"
+        "vitals_log_oxygen_saturation" -> "record oxygen saturation"
+        "vitals_log_respiratory_rate" -> "record respiratory rate"
+        "vitals_log_weight" -> "record weight"
+        "symptom_log_pain_level" -> "record pain level"
+        "emr_open_patient_chart" -> "open the patient chart"
+        "emr_add_patient" -> "add a new patient"
+        "emr_undo_last" -> "undo the last entry"
+        else -> describe(label).removePrefix("Executed: ").replaceFirstChar { it.lowercase() }
+    }
+
     /** Speech-friendly vital names ("SpO₂" is unreadable for TTS). */
     fun ttsName(type: VitalType): String = when (type) {
         VitalType.OXYGEN_SATURATION -> "Oxygen saturation"

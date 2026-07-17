@@ -89,16 +89,53 @@ class CommandProcessorTest {
     }
 
     @Test
-    fun lowConfidence_isRejected() {
-        val result = outcome("do the thing", FakeClassifier("vitals_log_heart_rate", confidence = 0.60f))
+    fun belowSuggestionFloor_isRejected() {
+        val result = outcome("do the thing", FakeClassifier("vitals_log_heart_rate", confidence = 0.50f))
         assertTrue(result is CommandOutcome.Rejected)
-        assertEquals(0.60f, (result as CommandOutcome.Rejected).confidence)
+        assertEquals(0.50f, (result as CommandOutcome.Rejected).confidence)
     }
 
     @Test
     fun noneClass_isRejected_evenAtFullConfidence() {
         val result = outcome("play some music", FakeClassifier("none", confidence = 1.0f))
         assertTrue(result is CommandOutcome.Rejected)
+    }
+
+    // --- "Did you mean?" suggestion band ---
+
+    @Test
+    fun moderateConfidence_offersSuggestion_insteadOfRejecting() {
+        val result = outcome("hard rate seventy two", FakeClassifier("vitals_log_heart_rate", confidence = 0.72f))
+        assertTrue(result is CommandOutcome.SuggestIntent)
+        result as CommandOutcome.SuggestIntent
+        assertEquals("vitals_log_heart_rate", result.intent)
+        assertEquals("record heart rate", result.description)
+        assertEquals(0.72f, result.confidence)
+    }
+
+    @Test
+    fun suggestionFloor_isInclusive_andExecuteThresholdExclusive() {
+        assertTrue(outcome("x", FakeClassifier("vitals_log_weight", 0.60f)) is CommandOutcome.SuggestIntent)
+        assertTrue(outcome("x", FakeClassifier("vitals_log_weight", 0.84f)) is CommandOutcome.SuggestIntent)
+        // 0.85 crosses the execute gate — it acts, not suggests
+        assertTrue(outcome("weight 80", FakeClassifier("vitals_log_weight", 0.85f)) is CommandOutcome.VitalRecorded)
+    }
+
+    @Test
+    fun criticalIntentInSuggestionBand_isRejected_notSuggested() {
+        // A fuzzy guess must never offer to run a dangerous action.
+        val result = outcome("discharge", FakeClassifier("staff_discharge_patient", confidence = 0.72f))
+        assertTrue(result is CommandOutcome.Rejected)
+    }
+
+    @Test
+    fun confirmedSuggestion_runsTheGuessThroughRegistry() = runBlocking {
+        val outcome = CommandProcessor(FakeClassifier()).resolveConfirmed(
+            "vitals_log_heart_rate", "heart rate 72", 0.72f, patients
+        )
+        assertTrue(outcome is CommandOutcome.VitalRecorded)
+        assertEquals("72", (outcome as CommandOutcome.VitalRecorded).value)
+        Unit
     }
 
     @Test
@@ -211,6 +248,26 @@ class CommandProcessorTest {
         assertEquals(1, batch.results.size)
         assertTrue(batch.results[0].outcome is CommandOutcome.RequestConfirmation)
         assertEquals(2, batch.skipped)
+        Unit
+    }
+
+    @Test
+    fun suggestionMidBatch_stopsAndReportsSkippedTail() = runBlocking {
+        // First segment records; second is a moderate-confidence guess that
+        // opens a "did you mean?" dialog, so the third must wait.
+        val classifier = object : IntentClassifierPort {
+            override suspend fun classify(text: String): IntentResult =
+                if ("heart" in text) IntentResult("vitals_log_heart_rate", 0.99f, "none", 0.01f)
+                else IntentResult("vitals_log_weight", 0.72f, "none", 0.28f)
+        }
+        val batch = CommandProcessor(classifier).processAll(
+            "heart rate 72, way too heavy, oxygen saturation 97",
+            patients, hasPendingAction = false
+        )
+        assertEquals(2, batch.results.size)
+        assertTrue(batch.results[0].outcome is CommandOutcome.VitalRecorded)
+        assertTrue(batch.results[1].outcome is CommandOutcome.SuggestIntent)
+        assertEquals(1, batch.skipped)
         Unit
     }
 
