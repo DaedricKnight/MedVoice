@@ -47,9 +47,15 @@ class IntentRegistry(
                 }
                 put("emr_undo_last") { CommandOutcome.UndoRequested }
                 val openChart = IntentHandler { r ->
-                    val matched = PatientMatcher.match(r.text, r.patients)
-                    if (matched != null) CommandOutcome.SwitchPatient(matched.id)
-                    else CommandOutcome.ShowPatientPicker(r.result.label, r.result.confidence)
+                    val match = PatientMatcher.resolve(r.text, r.patients)
+                    when {
+                        match == null -> CommandOutcome.ShowPatientPicker(r.result.label, r.result.confidence)
+                        // A look-alike name is on the ward — confirm before switching
+                        match.ambiguous -> CommandOutcome.ConfirmPatientSwitch(
+                            match.patient.id, match.patient.name, r.text
+                        )
+                        else -> CommandOutcome.SwitchPatient(match.patient.id)
+                    }
                 }
                 put("emr_open_patient_chart", openChart)
                 put("emr_search_patient_records", openChart)

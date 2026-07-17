@@ -56,11 +56,16 @@ class ChartRepository(private val db: ChartDatabase) {
 
     suspend fun audit(entry: AuditEntity) = db.audit().insert(entry)
 
-    /** Demo patients so the prototype is usable out of the box. */
+    /**
+     * Demo patients so the prototype is usable out of the box. "Jane Roe" and
+     * "Jane Doe" are deliberately confusable — they exercise the wrong-patient
+     * confirmation guard on a voice "open chart for Jane …".
+     */
     suspend fun seedIfEmpty(): Long {
         if (db.patients().count() == 0) {
             db.patients().insert(PatientEntity(name = "John Doe", mrn = "000-123-456", ward = "Ward B, Room 12"))
             db.patients().insert(PatientEntity(name = "Jane Roe", mrn = "000-789-012", ward = "Ward A, Room 3"))
+            db.patients().insert(PatientEntity(name = "Jane Doe", mrn = "000-789-034", ward = "Ward A, Room 7"))
             db.patients().insert(PatientEntity(name = "Robert Miles", mrn = "000-345-678", ward = "ICU, Bed 2"))
         }
         return db.patients().first()?.id ?: 0L

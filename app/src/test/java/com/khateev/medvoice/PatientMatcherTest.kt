@@ -51,6 +51,44 @@ class PatientMatcherTest {
         assertEquals(2L, PatientMatcher.match("open chart for jane roe", twoJanes)?.id)
     }
 
+    // --- Wrong-patient guard ---
+
+    private val withLookAlike = patients + Candidate(5, "Jane Doe")
+
+    @Test
+    fun `confusable detects one-token look-alike names`() {
+        assertEquals(true, PatientMatcher.confusable("Jane Roe", "Jane Doe"))
+        assertEquals(true, PatientMatcher.confusable("Jon Doe", "John Doe"))
+    }
+
+    @Test
+    fun `confusable rejects distinct and identical names`() {
+        assertEquals(false, PatientMatcher.confusable("Jane Roe", "John Doe"))
+        assertEquals(false, PatientMatcher.confusable("Robert Miles", "Jane Roe"))
+        // identical names are duplicates, handled by the picker, not "confusable"
+        assertEquals(false, PatientMatcher.confusable("Jane Roe", "Jane Roe"))
+    }
+
+    @Test
+    fun `resolve flags ambiguity when a look-alike is on the ward`() {
+        val match = PatientMatcher.resolve("open patient chart for jane roe", withLookAlike)
+        assertEquals(2L, match?.patient?.id)
+        assertEquals(true, match?.ambiguous)
+    }
+
+    @Test
+    fun `resolve is unambiguous when no look-alike exists`() {
+        val match = PatientMatcher.resolve("pull up the chart for robert miles", withLookAlike)
+        assertEquals(3L, match?.patient?.id)
+        assertEquals(false, match?.ambiguous)
+    }
+
+    @Test
+    fun `resolve returns null when the first name matches two patients`() {
+        // "jane" alone can't pick between Jane Roe and Jane Doe — picker, not a guess
+        assertNull(PatientMatcher.resolve("open chart for jane", withLookAlike))
+    }
+
     @Test
     fun `stripNames removes known patient tokens only`() {
         assertEquals(

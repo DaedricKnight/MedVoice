@@ -66,7 +66,9 @@ data class PendingAction(
     val description: String,
     val rawText: String,
     val confidence: Float? = null,
-    val suggestion: Boolean = false
+    val suggestion: Boolean = false,
+    /** Non-null for a patient-switch confirmation: the chart to open on confirm. */
+    val switchToPatientId: Long? = null
 )
 
 enum class DictationMode { COMMAND, NOTE }
@@ -540,6 +542,29 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
 
             is CommandOutcome.SwitchPatient -> selectPatient(outcome.patientId)
 
+            is CommandOutcome.ConfirmPatientSwitch -> {
+                val patient = _uiState.value.patients.find { it.id == outcome.patientId }
+                val desc = if (patient != null)
+                    "Open chart for ${patient.name} — ${patient.ward}, MRN ${patient.mrn}"
+                else "Open chart for ${outcome.patientName}"
+                _uiState.update {
+                    it.copy(
+                        pendingAction = PendingAction(
+                            intent = "emr_open_patient_chart",
+                            description = desc,
+                            rawText = outcome.rawText,
+                            switchToPatientId = outcome.patientId
+                        )
+                    )
+                }
+                addLog(
+                    "Similar names on the ward — confirm: $desc",
+                    "emr_open_patient_chart", null, LogKind.WARN, outcome.rawText
+                )
+                // Read back ward + MRN so the clinician catches a wrong-chart switch
+                speak("$desc. Say yes confirm, or negative")
+            }
+
             is CommandOutcome.ShowPatientPicker -> {
                 openPatientPicker()
                 addLog("Patient list opened", outcome.label, outcome.confidence, LogKind.OK)
@@ -644,19 +669,22 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
     fun confirmPendingAction() {
         val pending = _uiState.value.pendingAction ?: return
         _uiState.update { it.copy(pendingAction = null) }
-        if (pending.suggestion) {
-            // The user accepted the guess — run it now as a real command.
-            viewModelScope.launch {
+        when {
+            // Confirmed a look-alike patient switch — open that chart now.
+            pending.switchToPatientId != null -> selectPatient(pending.switchToPatientId)
+            // Accepted a "did you mean?" guess — run it as a real command.
+            pending.suggestion -> viewModelScope.launch {
                 val candidates = _uiState.value.patients.map { PatientMatcher.Candidate(it.id, it.name) }
                 val outcome = commandProcessor.resolveConfirmed(
                     pending.intent, pending.rawText, pending.confidence ?: 0f, candidates
                 )
                 render(outcome)
             }
-            return
+            else -> {
+                addLog("Confirmed: ${pending.description}", pending.intent, null, LogKind.OK, pending.rawText)
+                speak("Confirmed")
+            }
         }
-        addLog("Confirmed: ${pending.description}", pending.intent, null, LogKind.OK, pending.rawText)
-        speak("Confirmed")
     }
 
     fun dismissPendingAction() {

@@ -16,6 +16,24 @@ object PatientMatcher {
 
     data class Candidate(val id: Long, val name: String)
 
+    /**
+     * A resolved patient plus whether the roster holds a look-alike name a
+     * mishearing could have meant — the caller confirms before switching charts.
+     */
+    data class Match(val patient: Candidate, val ambiguous: Boolean)
+
+    /**
+     * Like [match], but also flags the wrong-chart risk: when the resolved
+     * patient has a [confusable] name-twin in the roster (e.g. "Jane Roe" and
+     * "Jane Doe"), [Match.ambiguous] is true so the UI can require confirmation
+     * instead of switching silently. Null still means "no resolvable name".
+     */
+    fun resolve(rawText: String, patients: List<Candidate>): Match? {
+        val best = match(rawText, patients) ?: return null
+        val ambiguous = patients.any { it.id != best.id && confusable(it.name, best.name) }
+        return Match(best, ambiguous)
+    }
+
     fun match(rawText: String, patients: List<Candidate>): Candidate? {
         val text = normalize(rawText)
         if (text.isBlank()) return null
@@ -49,6 +67,26 @@ object PatientMatcher {
         return text.split(Regex("\\s+"))
             .filter { it.lowercase().trim('.', ',', '!', '?') !in nameTokens }
             .joinToString(" ")
+    }
+
+    /**
+     * True for two roster names a mishearing could swap: same token count and
+     * exactly one token differing by a single edit ("jane roe" vs "jane doe",
+     * "jon doe" vs "john doe"). Identical names are duplicates, not confusable.
+     */
+    fun confusable(a: String, b: String): Boolean {
+        val ta = normalize(a).split(" ").filter { it.isNotEmpty() }
+        val tb = normalize(b).split(" ").filter { it.isNotEmpty() }
+        if (ta.isEmpty() || ta.size != tb.size || ta == tb) return false
+        var diffs = 0
+        for (i in ta.indices) {
+            when (levenshtein(ta[i], tb[i])) {
+                0 -> {}
+                1 -> diffs++
+                else -> return false
+            }
+        }
+        return diffs == 1
     }
 
     private fun normalize(s: String): String =

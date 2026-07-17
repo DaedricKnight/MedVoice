@@ -81,6 +81,16 @@ sealed interface CommandOutcome {
     /** "Open chart for <name>" resolved to a concrete patient. */
     data class SwitchPatient(val patientId: Long) : CommandOutcome
 
+    /**
+     * Resolved to a patient who has a look-alike name on the ward — confirm
+     * before switching charts (wrong-patient documentation guard).
+     */
+    data class ConfirmPatientSwitch(
+        val patientId: Long,
+        val patientName: String,
+        val rawText: String
+    ) : CommandOutcome
+
     /** Chart/search intent without a resolvable name — show the picker. */
     data class ShowPatientPicker(
         val label: String,
@@ -111,7 +121,9 @@ sealed interface CommandOutcome {
 
 /** True when the outcome opens a modal dialog awaiting a spoken yes/no answer. */
 val CommandOutcome.opensPendingDialog: Boolean
-    get() = this is CommandOutcome.RequestConfirmation || this is CommandOutcome.SuggestIntent
+    get() = this is CommandOutcome.RequestConfirmation ||
+        this is CommandOutcome.SuggestIntent ||
+        this is CommandOutcome.ConfirmPatientSwitch
 
 /** Processor result: the outcome plus classifier latency (null on shortcut paths). */
 data class Processed(

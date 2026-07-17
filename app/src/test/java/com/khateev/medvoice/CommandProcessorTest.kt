@@ -201,6 +201,19 @@ class CommandProcessorTest {
     }
 
     @Test
+    fun openChartWithLookAlikeOnWard_asksToConfirmInsteadOfSwitching() = runBlocking {
+        val roster = listOf(
+            PatientMatcher.Candidate(2, "Jane Roe"),
+            PatientMatcher.Candidate(5, "Jane Doe")
+        )
+        val result = CommandProcessor(FakeClassifier("emr_open_patient_chart"))
+            .process("open the file for jane roe", roster, hasPendingAction = false).outcome
+        assertTrue(result is CommandOutcome.ConfirmPatientSwitch)
+        assertEquals(2L, (result as CommandOutcome.ConfirmPatientSwitch).patientId)
+        Unit
+    }
+
+    @Test
     fun addPatient_opensForm() {
         val result = outcome("add a new patient", FakeClassifier("emr_add_patient"))
         assertTrue(result is CommandOutcome.ShowAddPatient)

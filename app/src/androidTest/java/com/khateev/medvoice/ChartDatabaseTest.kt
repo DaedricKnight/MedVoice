@@ -131,11 +131,13 @@ class ChartDatabaseTest {
     fun seedIfEmpty_insertsDemoPatientsOnce() = runBlocking {
         val firstId = repo.seedIfEmpty()
         val patients = repo.patients().first()
-        assertEquals(3, patients.size)
+        assertEquals(4, patients.size)
         assertEquals(firstId, patients.first().id)
 
         repo.seedIfEmpty() // second call must not duplicate
-        assertEquals(3, repo.patients().first().size)
+        assertEquals(4, repo.patients().first().size)
         assertTrue(patients.any { it.name == "John Doe" })
+        // Jane Roe / Jane Doe are the deliberately confusable pair
+        assertTrue(patients.any { it.name == "Jane Doe" })
     }
 }

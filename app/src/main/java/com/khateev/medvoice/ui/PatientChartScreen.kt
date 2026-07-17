@@ -153,7 +153,15 @@ fun PatientChartScreen(
     state.pendingAction?.let { pending ->
         AlertDialog(
             onDismissRequest = { viewModel.dismissPendingAction() },
-            title = { Text(if (pending.suggestion) "Did you mean?" else "Confirm action") },
+            title = {
+                Text(
+                    when {
+                        pending.switchToPatientId != null -> "Confirm patient"
+                        pending.suggestion -> "Did you mean?"
+                        else -> "Confirm action"
+                    }
+                )
+            },
             text = {
                 Column {
                     Text(
@@ -177,7 +185,14 @@ fun PatientChartScreen(
             },
             confirmButton = {
                 TextButton(onClick = { viewModel.confirmPendingAction() }) {
-                    Text(if (pending.suggestion) "YES" else "CONFIRM", fontWeight = FontWeight.Bold)
+                    Text(
+                        when {
+                            pending.switchToPatientId != null -> "OPEN"
+                            pending.suggestion -> "YES"
+                            else -> "CONFIRM"
+                        },
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             },
             dismissButton = {
