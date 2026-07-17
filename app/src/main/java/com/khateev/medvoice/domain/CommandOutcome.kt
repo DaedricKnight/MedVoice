@@ -102,3 +102,12 @@ data class Processed(
     val outcome: CommandOutcome,
     val inferenceMs: Long? = null
 )
+
+/**
+ * Result of batch dictation: outcomes for the processed segments plus how many
+ * trailing segments were skipped because a critical command needs confirmation.
+ */
+data class BatchResult(
+    val results: List<Processed>,
+    val skipped: Int
+)

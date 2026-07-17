@@ -26,6 +26,40 @@ class CommandProcessor(
     private val criticalIntents: Set<String> = DEFAULT_CRITICAL_INTENTS
 ) {
 
+    /**
+     * Batch dictation: one utterance may carry several commands separated by
+     * whisper's punctuation ("BP 120 over 80, pulse 72, sats 97"). Each
+     * segment runs through the full [process] pipeline in order. Processing
+     * stops after a [CommandOutcome.RequestConfirmation] — everything behind a
+     * critical command must wait until it is confirmed or cancelled — and the
+     * skipped tail is reported via [BatchResult.skipped].
+     *
+     * While a confirmation is pending the utterance is NOT split: it is a
+     * yes/no answer, not a command list.
+     */
+    suspend fun processAll(
+        rawText: String,
+        patients: List<PatientMatcher.Candidate>,
+        hasPendingAction: Boolean
+    ): BatchResult {
+        if (hasPendingAction) {
+            return BatchResult(listOf(process(rawText, patients, hasPendingAction = true)), skipped = 0)
+        }
+        val segments = UtteranceSplitter.split(rawText)
+        if (segments.size <= 1) {
+            return BatchResult(listOf(process(rawText, patients, hasPendingAction = false)), skipped = 0)
+        }
+        val results = mutableListOf<Processed>()
+        for ((index, segment) in segments.withIndex()) {
+            val processed = process(segment, patients, hasPendingAction = false)
+            results += processed
+            if (processed.outcome is CommandOutcome.RequestConfirmation) {
+                return BatchResult(results, skipped = segments.lastIndex - index)
+            }
+        }
+        return BatchResult(results, skipped = 0)
+    }
+
     suspend fun process(
         rawText: String,
         patients: List<PatientMatcher.Candidate>,

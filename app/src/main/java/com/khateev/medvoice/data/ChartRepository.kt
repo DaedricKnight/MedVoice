@@ -14,7 +14,7 @@ class ChartRepository(private val db: ChartDatabase) {
     fun latestVitals(patientId: Long): Flow<List<VitalEntity>> =
         db.vitals().observeLatestPerType(patientId)
 
-    fun note(patientId: Long): Flow<NoteEntity?> = db.notes().observe(patientId)
+    fun notes(patientId: Long): Flow<List<NoteEntity>> = db.notes().observe(patientId)
 
     suspend fun recordVital(patientId: Long, type: String, value: String) {
         db.vitals().insert(
@@ -27,9 +27,14 @@ class ChartRepository(private val db: ChartDatabase) {
         )
     }
 
-    suspend fun saveNote(patientId: Long, text: String) {
+    suspend fun saveNote(patientId: Long, section: String, text: String) {
         db.notes().upsert(
-            NoteEntity(patientId = patientId, text = text, updatedAt = System.currentTimeMillis())
+            NoteEntity(
+                patientId = patientId,
+                section = section,
+                text = text,
+                updatedAt = System.currentTimeMillis()
+            )
         )
     }
 
@@ -41,6 +46,9 @@ class ChartRepository(private val db: ChartDatabase) {
 
     suspend fun lastVital(patientId: Long): VitalEntity? =
         db.vitals().lastForPatient(patientId)
+
+    suspend fun lastVitalOfType(patientId: Long, type: String): VitalEntity? =
+        db.vitals().lastOfType(patientId, type)
 
     suspend fun deleteVital(id: Long) = db.vitals().deleteById(id)
 

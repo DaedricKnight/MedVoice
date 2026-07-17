@@ -9,6 +9,32 @@ hospital system).
 
 Русская версия: [INTENTS_RU.md](INTENTS_RU.md)
 
+## Batch dictation
+
+One utterance may carry several commands separated by natural pauses/commas:
+*"BP 120 over 80, pulse 72, temp is 36.8, sats 97"* records four vitals at
+once. Feedback is a single spoken summary; clinical alerts and NEWS2
+escalations are always spoken individually. If a critical command appears
+mid-batch, everything after it is skipped until you confirm or cancel.
+
+## Note dictation: SOAP sections
+
+In note-dictation mode (📝) the clinical note is structured as SOAP. Say a
+standalone phrase to switch sections — **"go to plan"**, **"start
+assessment"**, **"switch to objective"**, **"subjective"** — and everything
+you dictate afterwards lands in that section. Content that merely mentions
+these words ("the patient plans to walk") is appended as text, not treated
+as navigation.
+
+## NEWS2 early-warning score
+
+The chart continuously computes NEWS2 from the five voice-captured vitals
+(respiratory rate, SpO₂, temperature, systolic BP, heart rate; consciousness
+and supplemental O₂ are not captured, so the score is a lower bound). At
+score ≥ 5 the app speaks *"consider urgent review"*, at ≥ 7 *"emergency
+response required"*. Each recorded vital is also announced with its trend
+against the previous value ("down from 94").
+
 ---
 
 ## EMR — Electronic Medical Record (14)

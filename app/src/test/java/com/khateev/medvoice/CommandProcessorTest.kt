@@ -169,6 +169,72 @@ class CommandProcessorTest {
         assertTrue(result is CommandOutcome.ShowAddPatient)
     }
 
+    // --- Batch dictation ---
+
+    /** Routes by keyword so one utterance can hit different intents per segment. */
+    private class RoutingClassifier(private val route: (String) -> String) : IntentClassifierPort {
+        override suspend fun classify(text: String): IntentResult? {
+            val label = route(text)
+            return IntentResult(label, 0.99f, "none", 0.01f)
+        }
+    }
+
+    private val vitalsRouter = RoutingClassifier { text ->
+        when {
+            "blood pressure" in text -> "vitals_log_blood_pressure"
+            "heart rate" in text -> "vitals_log_heart_rate"
+            "oxygen" in text || "sats" in text -> "vitals_log_oxygen_saturation"
+            "code blue" in text -> "emrgy_call_code_blue"
+            else -> "none"
+        }
+    }
+
+    @Test
+    fun batchUtterance_recordsEachVitalSeparately() = runBlocking {
+        val batch = CommandProcessor(vitalsRouter).processAll(
+            "blood pressure 120 over 80, heart rate 72, oxygen saturation 97",
+            patients, hasPendingAction = false
+        )
+        assertEquals(0, batch.skipped)
+        val recorded = batch.results.map { it.outcome }.filterIsInstance<CommandOutcome.VitalRecorded>()
+        assertEquals(3, recorded.size)
+        assertEquals(listOf("120/80", "72", "97"), recorded.map { it.value })
+        Unit
+    }
+
+    @Test
+    fun criticalCommandInBatch_stopsAndReportsSkippedTail() = runBlocking {
+        val batch = CommandProcessor(vitalsRouter).processAll(
+            "call code blue, heart rate 72, oxygen saturation 97",
+            patients, hasPendingAction = false
+        )
+        assertEquals(1, batch.results.size)
+        assertTrue(batch.results[0].outcome is CommandOutcome.RequestConfirmation)
+        assertEquals(2, batch.skipped)
+        Unit
+    }
+
+    @Test
+    fun pendingConfirmation_disablesSplitting() = runBlocking {
+        // "yes, confirm" contains a comma but must be matched whole as the answer
+        val batch = CommandProcessor(vitalsRouter).processAll(
+            "yes, confirm", patients, hasPendingAction = true
+        )
+        assertEquals(1, batch.results.size)
+        assertEquals(CommandOutcome.ConfirmPending, batch.results[0].outcome)
+        Unit
+    }
+
+    @Test
+    fun singleCommand_isNotAffectedByBatchPath() = runBlocking {
+        val batch = CommandProcessor(vitalsRouter).processAll(
+            "heart rate 72", patients, hasPendingAction = false
+        )
+        assertEquals(1, batch.results.size)
+        assertEquals("72", (batch.results[0].outcome as CommandOutcome.VitalRecorded).value)
+        Unit
+    }
+
     // --- Registry fallbacks ---
 
     @Test

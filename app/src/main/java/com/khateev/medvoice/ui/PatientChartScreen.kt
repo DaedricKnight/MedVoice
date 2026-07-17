@@ -70,6 +70,8 @@ import com.khateev.medvoice.DictationMode
 import com.khateev.medvoice.HistoryPoint
 import com.khateev.medvoice.LogEntry
 import com.khateev.medvoice.LogKind
+import com.khateev.medvoice.News2
+import com.khateev.medvoice.NoteSection
 import com.khateev.medvoice.VitalType
 
 @Composable
@@ -91,6 +93,8 @@ fun PatientChartScreen(
         ) {
             PatientHeader(state, compact = true, onClick = { viewModel.openPatientPicker() })
             Spacer(Modifier.height(10.dp))
+            News2Card(state.news2)
+            Spacer(Modifier.height(10.dp))
             VitalsGrid(state, columns = 2, onTileClick = { viewModel.openHistory(it) }, modifier = Modifier.weight(0.55f))
             Spacer(Modifier.height(10.dp))
             CommandPanel(state, viewModel, onDictateClick, modifier = Modifier.weight(0.45f))
@@ -106,6 +110,8 @@ fun PatientChartScreen(
         ) {
             Column(modifier = Modifier.weight(0.62f)) {
                 PatientHeader(state, compact = false, onClick = { viewModel.openPatientPicker() })
+                Spacer(Modifier.height(12.dp))
+                News2Card(state.news2)
                 Spacer(Modifier.height(12.dp))
                 VitalsGrid(state, columns = 3, onTileClick = { viewModel.openHistory(it) }, modifier = Modifier.fillMaxSize())
             }
@@ -402,7 +408,11 @@ private fun CommandPanel(
             .padding(12.dp)
             .fillMaxSize()) {
 
-            NoteCard(state, noteActive, onClear = { viewModel.clearNote() })
+            NoteCard(
+                state, noteActive,
+                onClear = { viewModel.clearNote() },
+                onSectionClick = { viewModel.setNoteSection(it) }
+            )
             Spacer(Modifier.height(8.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -503,7 +513,13 @@ private fun DictateButton(
 }
 
 @Composable
-private fun NoteCard(state: ChartUiState, dictating: Boolean, onClear: () -> Unit) {
+private fun NoteCard(
+    state: ChartUiState,
+    dictating: Boolean,
+    onClear: () -> Unit,
+    onSectionClick: (NoteSection) -> Unit
+) {
+    val text = state.notes[state.activeSection] ?: ""
     Card(
         colors = CardDefaults.cardColors(
             containerColor = if (dictating)
@@ -515,25 +531,98 @@ private fun NoteCard(state: ChartUiState, dictating: Boolean, onClear: () -> Uni
         Column(modifier = Modifier.padding(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    if (dictating) "Clinical Note — dictating…" else "Clinical Note",
+                    if (dictating) "Note · ${state.activeSection.display} — dictating…"
+                    else "Note · ${state.activeSection.display}",
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.weight(1f)
                 )
-                if (state.noteText.isNotEmpty()) {
+                if (text.isNotEmpty()) {
                     TextButton(onClick = onClear) { Text("Clear", fontSize = 12.sp) }
                 }
             }
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                NoteSection.entries.forEach { section ->
+                    val active = section == state.activeSection
+                    val filled = !state.notes[section].isNullOrEmpty()
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                if (active) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.surface,
+                                RoundedCornerShape(8.dp)
+                            )
+                            .clickable { onSectionClick(section) }
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            // Dot marks sections that already have content
+                            if (filled && !active) "${section.display.first()}·" else "${section.display.first()}",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (active) MaterialTheme.colorScheme.onPrimary
+                            else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+                Spacer(Modifier.weight(1f))
+                Text(
+                    "🎤 “go to plan”",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+            }
+            Spacer(Modifier.height(6.dp))
             Text(
-                state.noteText.ifEmpty { "Tap 📝 and dictate — free text goes here, not to commands." },
+                text.ifEmpty { "Tap 📝 and dictate — free text goes to the ${state.activeSection.display} section." },
                 fontSize = 14.sp,
-                color = if (state.noteText.isEmpty()) Color.Gray
+                color = if (text.isEmpty()) Color.Gray
                 else MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier
                     .heightIn(min = 36.dp, max = 120.dp)
                     .verticalScroll(rememberScrollState())
             )
+        }
+    }
+}
+
+@Composable
+private fun News2Card(assessment: News2.Assessment?) {
+    val (container, content, label) = when (assessment?.risk) {
+        null -> Triple(MaterialTheme.colorScheme.surface, Color.Gray, "no vitals yet")
+        News2.Risk.LOW -> Triple(MaterialTheme.colorScheme.secondaryContainer, Color(0xFF1B998B), "low risk")
+        News2.Risk.LOW_MEDIUM -> Triple(Color(0xFFFFF3D6), Color(0xFFB07A00), "single red score — review")
+        News2.Risk.MEDIUM -> Triple(Color(0xFFFFE3C2), Color(0xFFB35B00), "urgent review")
+        News2.Risk.HIGH -> Triple(MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.error, "emergency response")
+    }
+    Card(colors = CardDefaults.cardColors(containerColor = container)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("NEWS2", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = content)
+            Spacer(Modifier.width(12.dp))
+            Text(
+                assessment?.score?.toString() ?: "—",
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+                color = content
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = content)
+                Text(
+                    if (assessment != null)
+                        "early warning score · ${assessment.components}/5 vitals on chart"
+                    else "early warning score",
+                    fontSize = 11.sp,
+                    color = Color.Gray
+                )
+            }
         }
     }
 }

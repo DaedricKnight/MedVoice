@@ -36,9 +36,11 @@ data class VitalEntity(
     val timestamp: Long
 )
 
-@Entity(tableName = "notes")
+/** One row per SOAP section (Subjective/Objective/Assessment/Plan) per patient. */
+@Entity(tableName = "notes", primaryKeys = ["patientId", "section"])
 data class NoteEntity(
-    @PrimaryKey val patientId: Long,
+    val patientId: Long,
+    val section: String,   // NoteSection.name
     val text: String,
     val updatedAt: Long
 )
@@ -93,6 +95,9 @@ interface VitalDao {
     @Query("SELECT * FROM vitals WHERE patientId = :patientId ORDER BY id DESC LIMIT 1")
     suspend fun lastForPatient(patientId: Long): VitalEntity?
 
+    @Query("SELECT * FROM vitals WHERE patientId = :patientId AND type = :type ORDER BY id DESC LIMIT 1")
+    suspend fun lastOfType(patientId: Long, type: String): VitalEntity?
+
     @Query("DELETE FROM vitals WHERE id = :id")
     suspend fun deleteById(id: Long)
 
@@ -103,7 +108,7 @@ interface VitalDao {
 @Dao
 interface NoteDao {
     @Query("SELECT * FROM notes WHERE patientId = :patientId")
-    fun observe(patientId: Long): Flow<NoteEntity?>
+    fun observe(patientId: Long): Flow<List<NoteEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(note: NoteEntity)
@@ -120,7 +125,7 @@ interface AuditDao {
 
 @Database(
     entities = [PatientEntity::class, VitalEntity::class, NoteEntity::class, AuditEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class ChartDatabase : RoomDatabase() {
@@ -149,13 +154,33 @@ abstract class ChartDatabase : RoomDatabase() {
             }
         }
 
+        /** SOAP sections: existing free-text notes become the Subjective section. */
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE `notes_v3` (" +
+                        "`patientId` INTEGER NOT NULL, " +
+                        "`section` TEXT NOT NULL, " +
+                        "`text` TEXT NOT NULL, " +
+                        "`updatedAt` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`patientId`, `section`))"
+                )
+                db.execSQL(
+                    "INSERT INTO `notes_v3` (patientId, section, text, updatedAt) " +
+                        "SELECT patientId, 'SUBJECTIVE', text, updatedAt FROM `notes`"
+                )
+                db.execSQL("DROP TABLE `notes`")
+                db.execSQL("ALTER TABLE `notes_v3` RENAME TO `notes`")
+            }
+        }
+
         fun get(context: Context): ChartDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     ChartDatabase::class.java,
                     "medvoice.db"
-                ).addMigrations(MIGRATION_1_2).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
             }
     }
 }

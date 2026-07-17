@@ -14,8 +14,11 @@ import androidx.lifecycle.viewModelScope
 import com.khateev.medvoice.data.AuditEntity
 import com.khateev.medvoice.data.ChartDatabase
 import com.khateev.medvoice.data.ChartRepository
+import com.khateev.medvoice.domain.BatchResult
 import com.khateev.medvoice.domain.CommandOutcome
 import com.khateev.medvoice.domain.CommandProcessor
+import com.khateev.medvoice.domain.IntentDescriptions
+import com.khateev.medvoice.domain.NoteSectionCommands
 import com.khateev.medvoice.ml.MedIntentClassifier
 import com.khateev.medvoice.ml.PatientMatcher
 import com.khateev.medvoice.speech.WhisperEngine
@@ -57,6 +60,14 @@ data class PendingAction(val intent: String, val description: String, val rawTex
 
 enum class DictationMode { COMMAND, NOTE }
 
+/** SOAP clinical note structure; [spoken] is the word used in voice navigation. */
+enum class NoteSection(val display: String, val spoken: String) {
+    SUBJECTIVE("Subjective", "subjective"),
+    OBJECTIVE("Objective", "objective"),
+    ASSESSMENT("Assessment", "assessment"),
+    PLAN("Plan", "plan")
+}
+
 data class PatientUi(val id: Long, val name: String, val mrn: String, val ward: String)
 
 /** One measurement in the history sheet; BP carries two series (sys/dia). */
@@ -73,7 +84,9 @@ data class ChartUiState(
     val listening: Boolean = false,
     val dictationMode: DictationMode = DictationMode.COMMAND,
     val partialText: String = "",
-    val noteText: String = "",
+    val notes: Map<NoteSection, String> = emptyMap(),
+    val activeSection: NoteSection = NoteSection.SUBJECTIVE,
+    val news2: News2.Assessment? = null,
     val patients: List<PatientUi> = emptyList(),
     val currentPatient: PatientUi? = null,
     val showPatientPicker: Boolean = false,
@@ -115,6 +128,9 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
     /** Offline system TTS; the mic is paused while it speaks (echo guard). */
     private var tts: TextToSpeech? = null
     private var ttsReady = false
+
+    /** Last spoken NEWS2 escalation for the current patient — avoids repeats. */
+    private var lastAnnouncedNews2: Int? = null
 
     companion object {
         private const val PREF_LAST_PATIENT = "last_patient_id"
@@ -181,7 +197,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
                             )
                         }
                     }.toMap()
-                    _uiState.update { it.copy(vitals = vitals) }
+                    _uiState.update { it.copy(vitals = vitals, news2 = News2.assess(vitals)) }
                 }
             }
             launch {
@@ -200,14 +216,19 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
             }
             launch {
                 currentPatientId.filter { it != -1L }.flatMapLatest { pid ->
-                    repository.note(pid)
-                }.collect { note ->
-                    _uiState.update { it.copy(noteText = note?.text ?: "") }
+                    repository.notes(pid)
+                }.collect { rows ->
+                    val notes = rows.mapNotNull { row ->
+                        runCatching { NoteSection.valueOf(row.section) }.getOrNull()
+                            ?.let { it to row.text }
+                    }.toMap()
+                    _uiState.update { it.copy(notes = notes) }
                 }
             }
             launch {
                 currentPatientId.filter { it != -1L }.collect { pid ->
                     prefs.edit().putLong(PREF_LAST_PATIENT, pid).apply()
+                    lastAnnouncedNews2 = null
                     _uiState.update { state ->
                         state.copy(currentPatient = state.patients.find { it.id == pid }
                             ?: state.currentPatient)
@@ -346,7 +367,8 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
         voiceInput.stopListening()
         _uiState.update { it.copy(dictationMode = mode) }
         val prompt = if (mode == DictationMode.NOTE) {
-            WhisperEngine.NOTE_PROMPT
+            // Bias whisper toward SOAP section names for voice navigation
+            WhisperEngine.NOTE_PROMPT + " Sections: subjective, objective, assessment, plan."
         } else {
             // Bias whisper toward the actual patient names for "open chart for <name>"
             val names = _uiState.value.patients.joinToString(", ") { it.name }
@@ -365,25 +387,40 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
         setPartialText("")
         when (_uiState.value.dictationMode) {
             DictationMode.COMMAND -> onCommand(text)
-            DictationMode.NOTE -> appendToNote(text)
+            DictationMode.NOTE -> {
+                // "go to plan" / "start assessment" navigates sections; anything
+                // else is content for the active section
+                val section = NoteSectionCommands.match(text)
+                if (section != null) setNoteSection(section, announce = true)
+                else appendToNote(text)
+            }
         }
+    }
+
+    fun setNoteSection(section: NoteSection, announce: Boolean = false) {
+        if (_uiState.value.activeSection == section) return
+        _uiState.update { it.copy(activeSection = section) }
+        addLog("Note section → ${section.display}", "note_section", null, LogKind.INFO)
+        if (announce) speak("${section.display} section")
     }
 
     private fun appendToNote(text: String) {
         val pid = currentPatientId.value
         if (pid == -1L) return
-        val current = _uiState.value.noteText
+        val section = _uiState.value.activeSection
+        val current = _uiState.value.notes[section] ?: ""
         val sep = if (current.isEmpty()) "" else " "
-        viewModelScope.launch { repository.saveNote(pid, current + sep + text) }
+        viewModelScope.launch { repository.saveNote(pid, section.name, current + sep + text) }
         val words = text.trim().split(Regex("\\s+")).size
-        addLog("Appended to clinical note (+$words words)", "note_dictation", null, LogKind.OK)
+        addLog("Appended to ${section.display} (+$words words)", "note_dictation", null, LogKind.OK)
     }
 
     fun clearNote() {
         val pid = currentPatientId.value
-        if (pid == -1L || _uiState.value.noteText.isEmpty()) return
-        viewModelScope.launch { repository.saveNote(pid, "") }
-        addLog("Clinical note cleared", null, null, LogKind.INFO)
+        val section = _uiState.value.activeSection
+        if (pid == -1L || _uiState.value.notes[section].isNullOrEmpty()) return
+        viewModelScope.launch { repository.saveNote(pid, section.name, "") }
+        addLog("${section.display} note cleared", null, null, LogKind.INFO)
     }
 
     fun setListening(listening: Boolean) = _uiState.update { it.copy(listening = listening, partialText = if (listening) it.partialText else "") }
@@ -398,24 +435,40 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
 
     /**
      * All decisions are made by the pure [CommandProcessor]; this method only
-     * renders the resulting [CommandOutcome] into side effects (DB, TTS, state).
+     * renders the resulting [CommandOutcome]s into side effects (DB, TTS, state).
+     *
+     * One utterance may carry several commands (batch dictation: "BP 120 over
+     * 80, pulse 72, sats 97"). In that case per-command speech is muted and a
+     * single spoken summary is produced instead — clinical alerts and NEWS2
+     * escalations always speak regardless.
      */
     fun onCommand(rawText: String) {
         viewModelScope.launch {
             val candidates = _uiState.value.patients.map { PatientMatcher.Candidate(it.id, it.name) }
-            val processed = commandProcessor.process(
+            val batch = commandProcessor.processAll(
                 rawText = rawText,
                 patients = candidates,
                 hasPendingAction = _uiState.value.pendingAction != null
             )
-            processed.inferenceMs?.let { ms ->
+            batch.results.mapNotNull { it.inferenceMs }.lastOrNull()?.let { ms ->
                 _uiState.update { it.copy(lastInferenceMs = ms, partialText = "") }
             }
-            render(processed.outcome)
+            val isBatch = batch.results.size > 1
+            for (processed in batch.results) {
+                render(processed.outcome, quiet = isBatch)
+            }
+            if (isBatch) speakBatchSummary(batch)
+            if (batch.skipped > 0) {
+                addLog(
+                    "${batch.skipped} command(s) after the critical one were skipped — confirm first, then repeat them",
+                    null, null, LogKind.WARN
+                )
+            }
         }
     }
 
-    private fun render(outcome: CommandOutcome) {
+    /** In quiet (batch) mode routine speech is suppressed; alerts always speak. */
+    private suspend fun render(outcome: CommandOutcome, quiet: Boolean = false) {
         when (outcome) {
             CommandOutcome.Ignored -> Unit
 
@@ -436,7 +489,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
                     "Not sure what you meant by \"${outcome.text}\" — please rephrase",
                     outcome.label, outcome.confidence, LogKind.WARN, outcome.text
                 )
-                speak("Please rephrase")
+                if (!quiet) speak("Please rephrase")
             }
 
             is CommandOutcome.RequestConfirmation -> {
@@ -447,21 +500,11 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
                 speak("${outcome.description}. Say yes confirm, or negative")
             }
 
-            is CommandOutcome.VitalRecorded -> {
-                setVital(outcome.type, outcome.value)
-                addLog(outcome.logMessage, outcome.label, outcome.confidence, LogKind.OK, outcome.rawText)
-                if (outcome.alert != null) {
-                    addLog("⚠ ${outcome.alert.message}", outcome.label, null, LogKind.WARN, outcome.rawText)
-                    // "scratch that" is the accent-robust undo phrase (96% vs 7% for "undo")
-                    speak("Warning. ${outcome.alert.message}. Say scratch that if this is a mistake")
-                } else {
-                    speak(outcome.spokenOk)
-                }
-            }
+            is CommandOutcome.VitalRecorded -> renderVitalRecorded(outcome, quiet)
 
             is CommandOutcome.VitalValueMissing -> {
                 addLog(outcome.logMessage, outcome.label, outcome.confidence, LogKind.WARN, outcome.rawText)
-                speak("No valid value, repeat with the number")
+                if (!quiet) speak("No valid value, repeat with the number")
             }
 
             is CommandOutcome.SwitchPatient -> selectPatient(outcome.patientId)
@@ -474,7 +517,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
             is CommandOutcome.ShowAddPatient -> {
                 openAddPatient()
                 addLog("New patient form opened", outcome.label, outcome.confidence, LogKind.OK, outcome.rawText)
-                speak("Adding a new patient")
+                if (!quiet) speak("Adding a new patient")
             }
 
             is CommandOutcome.SymptomLogged ->
@@ -483,6 +526,88 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
             is CommandOutcome.GenericExecuted ->
                 addLog(outcome.description, outcome.label, outcome.confidence, LogKind.OK)
         }
+    }
+
+    /**
+     * Recording a vital also produces trend feedback ("down from 94") against
+     * the previous value of the same type, and a NEWS2 escalation when the
+     * early-warning score reaches 5 — both computed at the moment of recording.
+     */
+    private suspend fun renderVitalRecorded(outcome: CommandOutcome.VitalRecorded, quiet: Boolean) {
+        val pid = currentPatientId.value
+        val previous = if (pid != -1L) repository.lastVitalOfType(pid, outcome.type.name) else null
+        if (pid != -1L) repository.recordVital(pid, outcome.type.name, outcome.value)
+
+        val trend = trendOf(previous?.value, outcome.value)
+        addLog(
+            outcome.logMessage + (trend?.logSuffix ?: ""),
+            outcome.label, outcome.confidence, LogKind.OK, outcome.rawText
+        )
+        if (outcome.alert != null) {
+            addLog("⚠ ${outcome.alert.message}", outcome.label, null, LogKind.WARN, outcome.rawText)
+            // "scratch that" is the accent-robust undo phrase (96% vs 7% for "undo")
+            speak("Warning. ${outcome.alert.message}. Say scratch that if this is a mistake")
+        } else if (!quiet) {
+            speak(outcome.spokenOk + (trend?.spokenSuffix ?: ""))
+        }
+        announceNews2(outcome.type, outcome.value)
+    }
+
+    private data class Trend(val logSuffix: String, val spokenSuffix: String)
+
+    /** Compares the leading number (systolic for BP); null when equal or unparsable. */
+    private fun trendOf(previous: String?, current: String): Trend? {
+        val prev = previous?.substringBefore('/')?.trim()?.toDoubleOrNull() ?: return null
+        val cur = current.substringBefore('/').trim().toDoubleOrNull() ?: return null
+        if (prev == cur) return null
+        val direction = if (cur > prev) "up" else "down"
+        val arrow = if (cur > prev) "↑" else "↓"
+        val prevSpoken = previous.replace("/", " over ")
+        return Trend(
+            logSuffix = " ($arrow from $previous)",
+            spokenSuffix = ", $direction from $prevSpoken"
+        )
+    }
+
+    /**
+     * NEWS2 escalation at the moment of recording: score >= 5 calls for urgent
+     * review, >= 7 for an emergency response. The freshly recorded value is
+     * overlaid on the chart state because the DB flow updates asynchronously.
+     * Always spoken — this must not be muted by batch mode.
+     */
+    private fun announceNews2(type: VitalType, value: String) {
+        val vitals = _uiState.value.vitals + (type to VitalValue(value, ""))
+        val assessment = News2.assess(vitals) ?: return
+        if (assessment.score < 5 || assessment.score == lastAnnouncedNews2) return
+        lastAnnouncedNews2 = assessment.score
+        val advice = if (assessment.score >= 7) "emergency response required" else "consider urgent review"
+        addLog(
+            "NEWS2 score ${assessment.score} (${assessment.components}/5 vitals) — $advice",
+            "news2", null, LogKind.WARN
+        )
+        speak("NEWS2 is ${assessment.score}. ${advice.replaceFirstChar { it.uppercase() }}")
+    }
+
+    /** One compact spoken summary for a batch utterance instead of N phrases. */
+    private fun speakBatchSummary(batch: BatchResult) {
+        val outcomes = batch.results.map { it.outcome }
+        val recorded = outcomes.filterIsInstance<CommandOutcome.VitalRecorded>()
+        val problems = outcomes.count {
+            it is CommandOutcome.Rejected || it is CommandOutcome.VitalValueMissing
+        }
+        val parts = mutableListOf<String>()
+        if (recorded.isNotEmpty()) {
+            parts += "Recorded " + recorded.joinToString(", ") {
+                IntentDescriptions.ttsName(it.type).lowercase()
+            }
+        }
+        if (problems > 0) {
+            parts += if (problems == 1) "one phrase not recognized" else "$problems phrases not recognized"
+        }
+        if (batch.skipped > 0) {
+            parts += "remaining commands are waiting for confirmation"
+        }
+        if (parts.isNotEmpty()) speak(parts.joinToString(". "))
     }
 
     fun confirmPendingAction() {
@@ -497,12 +622,6 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(pendingAction = null) }
         addLog("Cancelled: ${pending.description}", pending.intent, null, LogKind.INFO, pending.rawText)
         speak("Cancelled")
-    }
-
-    private fun setVital(type: VitalType, value: String) {
-        val pid = currentPatientId.value
-        if (pid == -1L) return
-        viewModelScope.launch { repository.recordVital(pid, type.name, value) }
     }
 
     /** Writes to the persistent audit table; the UI log is a Flow over it. */

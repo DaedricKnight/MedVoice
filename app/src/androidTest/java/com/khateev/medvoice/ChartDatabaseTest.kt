@@ -60,12 +60,16 @@ class ChartDatabaseTest {
     }
 
     @Test
-    fun noteUpsert_overwritesPerPatient() = runBlocking {
+    fun noteUpsert_overwritesPerPatientAndSection() = runBlocking {
         val p1 = db.patients().insert(PatientEntity(name = "A", mrn = "1", ward = "W1"))
-        db.notes().upsert(NoteEntity(patientId = p1, text = "first", updatedAt = 1))
-        db.notes().upsert(NoteEntity(patientId = p1, text = "first second", updatedAt = 2))
+        db.notes().upsert(NoteEntity(patientId = p1, section = "SUBJECTIVE", text = "first", updatedAt = 1))
+        db.notes().upsert(NoteEntity(patientId = p1, section = "SUBJECTIVE", text = "first second", updatedAt = 2))
+        db.notes().upsert(NoteEntity(patientId = p1, section = "PLAN", text = "start antibiotics", updatedAt = 3))
 
-        assertEquals("first second", db.notes().observe(p1).first()?.text)
+        val notes = db.notes().observe(p1).first()
+        assertEquals(2, notes.size)
+        assertEquals("first second", notes.single { it.section == "SUBJECTIVE" }.text)
+        assertEquals("start antibiotics", notes.single { it.section == "PLAN" }.text)
     }
 
     @Test
@@ -76,14 +80,14 @@ class ChartDatabaseTest {
         var fileDb = Room.databaseBuilder(context, ChartDatabase::class.java, "persistence-test.db").build()
         val pid = fileDb.patients().insert(PatientEntity(name = "P", mrn = "42", ward = "W"))
         fileDb.vitals().insert(VitalEntity(patientId = pid, type = "HEART_RATE", value = "72", timestamp = 1))
-        fileDb.notes().upsert(NoteEntity(patientId = pid, text = "persisted note", updatedAt = 1))
+        fileDb.notes().upsert(NoteEntity(patientId = pid, section = "SUBJECTIVE", text = "persisted note", updatedAt = 1))
         fileDb.close()
 
         // Reopen from disk — simulates app process death and restart
         fileDb = Room.databaseBuilder(context, ChartDatabase::class.java, "persistence-test.db").build()
         val vitals = fileDb.vitals().observeLatestPerType(pid).first()
         assertEquals("72", vitals.single { it.type == "HEART_RATE" }.value)
-        assertEquals("persisted note", fileDb.notes().observe(pid).first()?.text)
+        assertEquals("persisted note", fileDb.notes().observe(pid).first().single().text)
         fileDb.close()
         context.deleteDatabase("persistence-test.db")
         Unit
