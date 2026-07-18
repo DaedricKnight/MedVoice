@@ -45,6 +45,17 @@ data class NoteEntity(
     val updatedAt: Long
 )
 
+/** One intake or output event for fluid-balance (I/O) tracking. */
+@Entity(tableName = "fluids")
+data class FluidEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val patientId: Long,
+    val kind: String,       // "INTAKE" | "OUTPUT"
+    val category: String,   // "urine", "oral", "IV", "drain", ...
+    val amountMl: Int,
+    val timestamp: Long
+)
+
 /**
  * Persistent audit trail: every recognized command, rejection, confirmation and
  * chart change — with the raw transcript and model confidence. Survives process
@@ -123,9 +134,24 @@ interface AuditDao {
     suspend fun insert(entry: AuditEntity)
 }
 
+@Dao
+interface FluidDao {
+    @Query("SELECT * FROM fluids WHERE patientId = :patientId ORDER BY id")
+    fun observeForPatient(patientId: Long): Flow<List<FluidEntity>>
+
+    @Query("SELECT * FROM fluids WHERE patientId = :patientId ORDER BY id DESC LIMIT 1")
+    suspend fun lastForPatient(patientId: Long): FluidEntity?
+
+    @Query("DELETE FROM fluids WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
+    @Insert
+    suspend fun insert(fluid: FluidEntity)
+}
+
 @Database(
-    entities = [PatientEntity::class, VitalEntity::class, NoteEntity::class, AuditEntity::class],
-    version = 3,
+    entities = [PatientEntity::class, VitalEntity::class, NoteEntity::class, AuditEntity::class, FluidEntity::class],
+    version = 4,
     exportSchema = false
 )
 abstract class ChartDatabase : RoomDatabase() {
@@ -133,6 +159,7 @@ abstract class ChartDatabase : RoomDatabase() {
     abstract fun vitals(): VitalDao
     abstract fun notes(): NoteDao
     abstract fun audit(): AuditDao
+    abstract fun fluids(): FluidDao
 
     companion object {
         @Volatile
@@ -174,13 +201,28 @@ abstract class ChartDatabase : RoomDatabase() {
             }
         }
 
+        /** Fluid-balance (I/O) tracking table. */
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `fluids` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`patientId` INTEGER NOT NULL, " +
+                        "`kind` TEXT NOT NULL, " +
+                        "`category` TEXT NOT NULL, " +
+                        "`amountMl` INTEGER NOT NULL, " +
+                        "`timestamp` INTEGER NOT NULL)"
+                )
+            }
+        }
+
         fun get(context: Context): ChartDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     ChartDatabase::class.java,
                     "medvoice.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
             }
     }
 }

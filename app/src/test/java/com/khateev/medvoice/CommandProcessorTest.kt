@@ -8,6 +8,7 @@ package com.khateev.medvoice
 import com.khateev.medvoice.domain.ChartQuery
 import com.khateev.medvoice.domain.CommandOutcome
 import com.khateev.medvoice.domain.CommandProcessor
+import com.khateev.medvoice.domain.FluidMatcher
 import com.khateev.medvoice.domain.IntentClassifierPort
 import com.khateev.medvoice.domain.IntentResult
 import com.khateev.medvoice.ml.PatientMatcher
@@ -89,6 +90,25 @@ class CommandProcessorTest {
         assertTrue(result is CommandOutcome.AnswerRequest)
         assertEquals(ChartQuery.CriticalValues, (result as CommandOutcome.AnswerRequest).query)
         assertNull("a read-only query must never hit the model", classifier.lastText)
+    }
+
+    @Test
+    fun fluidIoLog_isRecordedWithoutClassification() {
+        val classifier = FakeClassifier("vitals_log_heart_rate")
+        val result = outcome("urine output 300 ml", classifier)
+        assertTrue(result is CommandOutcome.FluidRecorded)
+        result as CommandOutcome.FluidRecorded
+        assertEquals(FluidMatcher.Kind.OUTPUT, result.kind)
+        assertEquals("urine", result.category)
+        assertEquals(300, result.amountMl)
+        assertNull("I/O logging is deterministic — must not hit the model", classifier.lastText)
+    }
+
+    @Test
+    fun fluidBalanceQuery_answersWithoutClassification() {
+        val result = outcome("fluid balance", FakeClassifier("none"))
+        assertTrue(result is CommandOutcome.AnswerRequest)
+        assertEquals(ChartQuery.FluidBalance, (result as CommandOutcome.AnswerRequest).query)
     }
 
     // --- Classifier gates ---

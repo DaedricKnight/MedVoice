@@ -113,18 +113,35 @@ class ChartAnswersTest {
         val a = ChartAnswers.summary(
             patientName = "Jane Roe", ward = "Ward A, Room 3",
             news2 = news2, vitals = vitals,
+            fluids = FluidTotals(intakeMl = 700, outputMl = 300, count = 3),
             plan = "start antibiotics", mostRecentActivity = "pain level 3 recorded"
         )
         assertTrue(a.spoken.startsWith("Jane Roe, Ward A, Room 3."))
         assertTrue(a.spoken.contains("NEWS2 is 4, low to medium risk."))
         assertTrue(a.spoken.contains("148 over 92"))
+        assertTrue(a.spoken.contains("Fluid balance net positive 400 millilitres."))
         assertTrue(a.spoken.contains("Plan: start antibiotics."))
         assertTrue(a.spoken.contains("Most recent: pain level 3 recorded."))
     }
 
     @Test
     fun summary_emptyChart_saysNoData() {
-        val a = ChartAnswers.summary("", "", null, emptyMap(), null, null)
+        val a = ChartAnswers.summary("", "", null, emptyMap(), null, null, null)
         assertEquals("No data recorded for this patient yet.", a.spoken)
+    }
+
+    @Test
+    fun fluidBalance_reportsIntakeOutputAndNet() {
+        assertEquals(
+            "No fluid intake or output recorded yet.",
+            ChartAnswers.fluidBalance(null).spoken
+        )
+        val positive = ChartAnswers.fluidBalance(FluidTotals(intakeMl = 900, outputMl = 400, count = 4))
+        assertEquals(
+            "Fluid balance: intake 900 millilitres, output 400 millilitres, net positive 500.",
+            positive.spoken
+        )
+        val negative = ChartAnswers.fluidBalance(FluidTotals(intakeMl = 200, outputMl = 650, count = 3))
+        assertTrue(negative.spoken.contains("net negative 450"))
     }
 }

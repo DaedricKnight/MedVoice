@@ -11,6 +11,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.khateev.medvoice.data.AuditEntity
 import com.khateev.medvoice.data.ChartDatabase
 import com.khateev.medvoice.data.ChartRepository
+import com.khateev.medvoice.data.FluidEntity
 import com.khateev.medvoice.data.NoteEntity
 import com.khateev.medvoice.data.PatientEntity
 import com.khateev.medvoice.data.VitalEntity
@@ -125,6 +126,24 @@ class ChartDatabaseTest {
         assertEquals("vitals_log_heart_rate", recent[1].intent)
         assertEquals(1.0f, recent[1].confidence)
         assertEquals("log heart rate 72", recent[1].rawText)
+    }
+
+    @Test
+    fun fluids_roundTripTotalsAndUndo() = runBlocking {
+        val pid = db.patients().insert(PatientEntity(name = "A", mrn = "1", ward = "W"))
+        db.fluids().insert(FluidEntity(patientId = pid, kind = "INTAKE", category = "oral", amountMl = 200, timestamp = 1))
+        db.fluids().insert(FluidEntity(patientId = pid, kind = "INTAKE", category = "IV", amountMl = 500, timestamp = 2))
+        db.fluids().insert(FluidEntity(patientId = pid, kind = "OUTPUT", category = "urine", amountMl = 300, timestamp = 3))
+
+        val rows = db.fluids().observeForPatient(pid).first()
+        assertEquals(700, rows.filter { it.kind == "INTAKE" }.sumOf { it.amountMl })
+        assertEquals(300, rows.filter { it.kind == "OUTPUT" }.sumOf { it.amountMl })
+
+        // undo removes the most recent entry
+        val last = db.fluids().lastForPatient(pid)
+        assertEquals("urine", last?.category)
+        db.fluids().deleteById(last!!.id)
+        assertEquals(2, db.fluids().observeForPatient(pid).first().size)
     }
 
     @Test

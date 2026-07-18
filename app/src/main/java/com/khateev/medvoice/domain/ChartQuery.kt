@@ -32,6 +32,9 @@ sealed interface ChartQuery {
     /** A recap of the most recent chart activity from the audit log. */
     data object Activity : ChartQuery
 
+    /** Fluid balance (I/O): total intake, total output and net. */
+    data object FluidBalance : ChartQuery
+
     /** A synthesized SBAR-style spoken handover summary ("catch me up"). */
     data object Summary : ChartQuery
 }
@@ -101,6 +104,13 @@ object ChartQueries {
             "recent activity", "recent changes", "what happened recently",
             "recap", "whats been recorded", "what's been recorded", "whats new",
         ).forEach { putIfAbsent(it, ChartQuery.Activity) }
+
+        listOf(
+            "fluid balance", "the fluid balance", "what is the fluid balance",
+            "whats the fluid balance", "total intake", "total output",
+            "how much intake", "how much output", "how much urine", "urine output",
+            "ins and outs", "i and o", "intake and output",
+        ).forEach { putIfAbsent(it, ChartQuery.FluidBalance) }
 
         listOf(
             "catch me up", "patient summary", "give me a summary", "give me the summary",

@@ -124,6 +124,13 @@ sealed interface CommandOutcome {
      * written to the chart.
      */
     data class AnswerRequest(val query: ChartQuery) : CommandOutcome
+
+    /** A fluid intake/output (I/O) event to record ("urine output 300"). */
+    data class FluidRecorded(
+        val kind: FluidMatcher.Kind,
+        val category: String,
+        val amountMl: Int
+    ) : CommandOutcome
 }
 
 /** True when the outcome opens a modal dialog awaiting a spoken yes/no answer. */

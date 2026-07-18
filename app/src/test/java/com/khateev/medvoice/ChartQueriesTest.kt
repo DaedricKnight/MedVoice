@@ -49,6 +49,15 @@ class ChartQueriesTest {
     }
 
     @Test
+    fun fluidBalanceQueries_match_butIoLogsDoNot() {
+        assertEquals(ChartQuery.FluidBalance, ChartQueries.match("fluid balance"))
+        assertEquals(ChartQuery.FluidBalance, ChartQueries.match("total intake"))
+        assertEquals(ChartQuery.FluidBalance, ChartQueries.match("urine output"))
+        // "urine output 300" carries a number → it's an I/O log, not a query
+        assertNull(ChartQueries.match("urine output 300"))
+    }
+
+    @Test
     fun commandsAndUnknownPhrases_doNotMatch() {
         // Real commands must fall through to the classifier, not be read-only queries
         assertNull(ChartQueries.match("record blood pressure 120 over 80"))

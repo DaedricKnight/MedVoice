@@ -79,6 +79,24 @@ object ChartAnswers {
         )
     }
 
+    // --- Fluid balance (I/O) ---
+
+    fun fluidBalance(fluids: FluidTotals?): Answer {
+        if (fluids == null) return same("No fluid intake or output recorded yet.")
+        val net = fluids.balanceMl
+        val netPhrase = when {
+            net > 0 -> "net positive $net"
+            net < 0 -> "net negative ${-net}"
+            else -> "even"
+        }
+        return Answer(
+            spoken = "Fluid balance: intake ${fluids.intakeMl} millilitres, " +
+                "output ${fluids.outputMl} millilitres, $netPhrase.",
+            display = "Intake ${fluids.intakeMl} mL · Output ${fluids.outputMl} mL · " +
+                "Net ${if (net > 0) "+$net" else "$net"} mL"
+        )
+    }
+
     // --- Activity ---
 
     fun activity(recentMessages: List<String>): Answer {
@@ -97,6 +115,7 @@ object ChartAnswers {
         ward: String,
         news2: News2.Assessment?,
         vitals: Map<VitalType, VitalValue>,
+        fluids: FluidTotals?,
         plan: String?,
         mostRecentActivity: String?
     ): Answer {
@@ -123,6 +142,13 @@ object ChartAnswers {
                 "${IntentDescriptions.ttsName(it)} ${spoken(it, vitals[it]!!.value)}"
             } + ". ")
             display.append("$label: " + shown.joinToString(", ") { "${it.display} ${vitals[it]!!.value}" } + "\n")
+        }
+
+        if (fluids != null) {
+            val net = fluids.balanceMl
+            val netPhrase = if (net > 0) "net positive $net" else if (net < 0) "net negative ${-net}" else "even"
+            spoken.append("Fluid balance $netPhrase millilitres. ")
+            display.append("Fluids: in ${fluids.intakeMl} / out ${fluids.outputMl} / net ${if (net > 0) "+$net" else "$net"} mL\n")
         }
 
         if (!plan.isNullOrBlank()) {

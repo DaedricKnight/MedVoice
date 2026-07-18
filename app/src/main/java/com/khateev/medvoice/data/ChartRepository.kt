@@ -56,6 +56,26 @@ class ChartRepository(private val db: ChartDatabase) {
 
     suspend fun audit(entry: AuditEntity) = db.audit().insert(entry)
 
+    // --- Fluid balance (I/O) ---
+
+    fun fluids(patientId: Long): Flow<List<FluidEntity>> = db.fluids().observeForPatient(patientId)
+
+    suspend fun recordFluid(patientId: Long, kind: String, category: String, amountMl: Int) {
+        db.fluids().insert(
+            FluidEntity(
+                patientId = patientId,
+                kind = kind,
+                category = category,
+                amountMl = amountMl,
+                timestamp = System.currentTimeMillis()
+            )
+        )
+    }
+
+    suspend fun lastFluid(patientId: Long): FluidEntity? = db.fluids().lastForPatient(patientId)
+
+    suspend fun deleteFluid(id: Long) = db.fluids().deleteById(id)
+
     /**
      * Demo patients so the prototype is usable out of the box. "Jane Roe" and
      * "Jane Doe" are deliberately confusable — they exercise the wrong-patient

@@ -71,6 +71,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import com.khateev.medvoice.ChartUiState
 import com.khateev.medvoice.ChartViewModel
 import com.khateev.medvoice.DictationMode
+import com.khateev.medvoice.FluidTotals
 import com.khateev.medvoice.HistoryPoint
 import com.khateev.medvoice.LogEntry
 import com.khateev.medvoice.LogKind
@@ -112,6 +113,8 @@ fun PatientChartScreen(
             Spacer(Modifier.height(10.dp))
             if (!showLog) {
                 News2Card(state.news2)
+                Spacer(Modifier.height(8.dp))
+                FluidCard(state.fluids)
                 Spacer(Modifier.height(10.dp))
                 // Log collapsed → grid gets the full height and shows every vital.
                 VitalsGrid(state, columns = 2, onTileClick = { viewModel.openHistory(it) }, modifier = Modifier.weight(1f))
@@ -138,6 +141,8 @@ fun PatientChartScreen(
                 PatientHeader(state, compact = false, onClick = { viewModel.openPatientPicker() })
                 Spacer(Modifier.height(12.dp))
                 News2Card(state.news2)
+                Spacer(Modifier.height(8.dp))
+                FluidCard(state.fluids)
                 Spacer(Modifier.height(12.dp))
                 VitalsGrid(state, columns = 3, onTileClick = { viewModel.openHistory(it) }, modifier = Modifier.fillMaxSize())
             }
@@ -710,6 +715,52 @@ private fun AnswerCard(text: String, onDismiss: () -> Unit) {
             TextButton(onClick = onDismiss, contentPadding = androidx.compose.foundation.layout.PaddingValues(8.dp)) {
                 Text("✕", fontSize = 14.sp, color = MaterialTheme.colorScheme.onTertiaryContainer)
             }
+        }
+    }
+}
+
+@Composable
+private fun FluidCard(fluids: FluidTotals?) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Fluid Balance",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.weight(1f)
+            )
+            if (fluids == null) {
+                Text("no I/O recorded", fontSize = 12.sp, color = Color.Gray)
+            } else {
+                FluidStat("In", "${fluids.intakeMl}", Color(0xFF1B998B))
+                Spacer(Modifier.width(16.dp))
+                FluidStat("Out", "${fluids.outputMl}", Color(0xFFB35B00))
+                Spacer(Modifier.width(16.dp))
+                val net = fluids.balanceMl
+                FluidStat(
+                    "Net",
+                    if (net > 0) "+$net" else "$net",
+                    if (kotlin.math.abs(net) >= 2000) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FluidStat(label: String, value: String, valueColor: Color) {
+    Column(horizontalAlignment = Alignment.End) {
+        Text(label, fontSize = 10.sp, color = Color.Gray)
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(value, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = valueColor)
+            Text(" mL", fontSize = 10.sp, color = Color.Gray)
         }
     }
 }

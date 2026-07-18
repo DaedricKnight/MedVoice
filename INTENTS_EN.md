@@ -26,6 +26,29 @@ you dictate afterwards lands in that section. Content that merely mentions
 these words ("the patient plans to walk") is appended as text, not treated
 as navigation.
 
+## Fluid balance (intake / output)
+
+Nurses key ~640 flowsheet points per shift, mostly I/O. MedVoice records these
+by voice with a deterministic matcher (a category keyword + an amount) — no
+model, no retraining. A running "Fluid Balance" card shows total intake, total
+output and net.
+
+| Say | Records |
+|---|---|
+| "oral intake 200 mL" · "patient drank 250" | Intake — oral |
+| "IV fluids 500" | Intake — IV |
+| "urine output 300" · "voided 250 mL" | Output — urine |
+| "drain output 50" · "drainage 40 mils" | Output — drain |
+| "vomit 100" · "emesis 150 mL" | Output — emesis |
+| "output 250" / "intake 200" | Generic output / intake |
+
+Amounts accept millilitres, litres ("1.5 litres" → 1500 mL) and "N thousand".
+An I/O entry needs a number — "urine output" alone is a review question (see
+below), and "order IV fluids" (no amount) stays a medication order. "scratch
+that" undoes the most recent entry, vital or fluid. Ask **"fluid balance"**,
+**"total intake"**, **"total output"** or **"urine output"** to hear the
+running totals; the SBAR "catch me up" summary includes the net balance.
+
 ## Voice chart review (ask & listen)
 
 Chart review is *reading*, not entry — so this is a different mode: you ask,

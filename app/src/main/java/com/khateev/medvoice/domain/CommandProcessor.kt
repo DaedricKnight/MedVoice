@@ -90,6 +90,12 @@ class CommandProcessor(
         // matched deterministically before classification — read-only, no model.
         ChartQueries.match(text)?.let { return Processed(CommandOutcome.AnswerRequest(it)) }
 
+        // Fluid I/O ("urine output 300", "oral intake 200") is recorded by a
+        // deterministic matcher too — the model has no flowsheet I/O intents.
+        FluidMatcher.match(text)?.let {
+            return Processed(CommandOutcome.FluidRecorded(it.kind, it.category, it.amountMl))
+        }
+
         // Patient names are dynamic and unknown at training time — strip them
         // before classification, match them from the full text afterwards.
         val classifyText = PatientMatcher.stripNames(

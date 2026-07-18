@@ -18,6 +18,7 @@ import com.khateev.medvoice.domain.BatchResult
 import com.khateev.medvoice.domain.ChartQuery
 import com.khateev.medvoice.domain.CommandOutcome
 import com.khateev.medvoice.domain.CommandProcessor
+import com.khateev.medvoice.domain.FluidMatcher
 import com.khateev.medvoice.domain.IntentDescriptions
 import com.khateev.medvoice.domain.NoteSectionCommands
 import com.khateev.medvoice.ml.MedIntentClassifier
@@ -84,6 +85,11 @@ enum class NoteSection(val display: String, val spoken: String) {
 
 data class PatientUi(val id: Long, val name: String, val mrn: String, val ward: String)
 
+/** Running fluid balance (I/O) totals for the current patient. */
+data class FluidTotals(val intakeMl: Int, val outputMl: Int, val count: Int) {
+    val balanceMl: Int get() = intakeMl - outputMl
+}
+
 /** One measurement in the history sheet; BP carries two series (sys/dia). */
 data class HistoryPoint(
     val display: String,
@@ -106,6 +112,7 @@ data class ChartUiState(
     val showPatientPicker: Boolean = false,
     val showAddPatient: Boolean = false,
     val vitals: Map<VitalType, VitalValue> = emptyMap(),
+    val fluids: FluidTotals? = null,
     val actions: List<LogEntry> = emptyList(),
     val pendingAction: PendingAction? = null,
     val historyType: VitalType? = null,
@@ -217,6 +224,18 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
             launch {
+                currentPatientId.filter { it != -1L }.flatMapLatest { pid ->
+                    repository.fluids(pid)
+                }.collect { rows ->
+                    val totals = if (rows.isEmpty()) null else FluidTotals(
+                        intakeMl = rows.filter { it.kind == "INTAKE" }.sumOf { it.amountMl },
+                        outputMl = rows.filter { it.kind == "OUTPUT" }.sumOf { it.amountMl },
+                        count = rows.size
+                    )
+                    _uiState.update { it.copy(fluids = totals) }
+                }
+            }
+            launch {
                 repository.recentAudit().collect { rows ->
                     val entries = rows.map { row ->
                         LogEntry(
@@ -320,21 +339,36 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- Undo ---
 
-    private fun undoLastVital() {
+    /** Undoes the most recent entry — vital or fluid — whichever was recorded last. */
+    private fun undoLast() {
         val pid = currentPatientId.value
         if (pid == -1L) return
         viewModelScope.launch {
-            val last = repository.lastVital(pid)
-            if (last == null) {
-                addLog("Nothing to undo", "undo", null, LogKind.WARN)
-                speak("Nothing to undo")
-            } else {
-                repository.deleteVital(last.id)
-                val type = runCatching { VitalType.valueOf(last.type) }.getOrNull()
-                val message = "Removed ${type?.display ?: last.type}: ${last.value}"
-                addLog(message, "undo", null, LogKind.OK)
-                speak(message)
+            val lastVital = repository.lastVital(pid)
+            val lastFluid = repository.lastFluid(pid)
+            val fluidIsNewer = lastFluid != null &&
+                (lastVital == null || lastFluid.timestamp >= lastVital.timestamp)
+
+            val message = when {
+                lastVital == null && lastFluid == null -> {
+                    addLog("Nothing to undo", "undo", null, LogKind.WARN)
+                    speak("Nothing to undo")
+                    return@launch
+                }
+                fluidIsNewer -> {
+                    repository.deleteFluid(lastFluid!!.id)
+                    val kind = runCatching { FluidMatcher.Kind.valueOf(lastFluid.kind) }
+                        .getOrDefault(FluidMatcher.Kind.OUTPUT)
+                    "Removed ${fluidName(kind, lastFluid.category)}: ${lastFluid.amountMl} mL"
+                }
+                else -> {
+                    repository.deleteVital(lastVital!!.id)
+                    val type = runCatching { VitalType.valueOf(lastVital.type) }.getOrNull()
+                    "Removed ${type?.display ?: lastVital.type}: ${lastVital.value}"
+                }
             }
+            addLog(message, "undo", null, LogKind.OK)
+            speak(message)
         }
     }
 
@@ -497,7 +531,7 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
                 speak("Say yes confirm, or negative")
             }
 
-            CommandOutcome.UndoRequested -> undoLastVital()
+            CommandOutcome.UndoRequested -> undoLast()
 
             CommandOutcome.ClassifierNotReady ->
                 addLog("Model is not ready", null, null, LogKind.ERROR)
@@ -539,6 +573,14 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             is CommandOutcome.VitalRecorded -> renderVitalRecorded(outcome, quiet)
+
+            is CommandOutcome.FluidRecorded -> {
+                val pid = currentPatientId.value
+                if (pid != -1L) repository.recordFluid(pid, outcome.kind.name, outcome.category, outcome.amountMl)
+                val name = fluidName(outcome.kind, outcome.category)
+                addLog("$name recorded: ${outcome.amountMl} mL", "fluid_io", null, LogKind.OK)
+                if (!quiet) speak("$name ${outcome.amountMl} millilitres recorded")
+            }
 
             is CommandOutcome.VitalValueMissing -> {
                 addLog(outcome.logMessage, outcome.label, outcome.confidence, LogKind.WARN, outcome.rawText)
@@ -612,11 +654,13 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
             }
             is ChartQuery.Note -> ChartAnswers.note(query.section, state.notes)
             ChartQuery.Activity -> ChartAnswers.activity(state.actions.map { it.text })
+            ChartQuery.FluidBalance -> ChartAnswers.fluidBalance(state.fluids)
             ChartQuery.Summary -> ChartAnswers.summary(
                 patientName = state.currentPatient?.name ?: "",
                 ward = state.currentPatient?.ward ?: "",
                 news2 = state.news2,
                 vitals = state.vitals,
+                fluids = state.fluids,
                 plan = state.notes[NoteSection.PLAN],
                 mostRecentActivity = state.actions.firstOrNull()?.text
             )
@@ -651,6 +695,14 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
             speak(outcome.spokenOk + (trend?.spokenSuffix ?: ""))
         }
         announceNews2(outcome.type, outcome.value)
+    }
+
+    /** "Urine output", "Oral intake", or just "Intake"/"Output" for generic categories. */
+    private fun fluidName(kind: FluidMatcher.Kind, category: String): String {
+        val kindWord = if (kind == FluidMatcher.Kind.INTAKE) "intake" else "output"
+        if (category.equals(kindWord, ignoreCase = true)) return kindWord.replaceFirstChar { it.uppercase() }
+        val catName = if (category == "IV") "IV" else category.replaceFirstChar { it.uppercase() }
+        return "$catName $kindWord"
     }
 
     private data class Trend(val logSuffix: String, val spokenSuffix: String)
