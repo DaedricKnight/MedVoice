@@ -59,6 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -86,9 +87,17 @@ fun PatientChartScreen(
     val state by viewModel.uiState.collectAsState()
     val isPortrait =
         LocalConfiguration.current.orientation != Configuration.ORIENTATION_LANDSCAPE
-    // With the keyboard open the screen shrinks to ~40%: hide the grid and the
-    // note so the command log and the input field stay visible while typing.
     val imeVisible = WindowInsets.isImeVisible
+    val focusManager = LocalFocusManager.current
+    // Portrait shows EITHER the chart (vitals + note) with a collapsed command
+    // header, OR the full command panel (log + answer + input). Tapping the
+    // header — or the text field (which raises the keyboard) — expands it.
+    var commandsExpanded by remember { mutableStateOf(false) }
+    val showCommands = commandsExpanded || imeVisible
+    val toggleCommands: () -> Unit = {
+        if (showCommands) { commandsExpanded = false; focusManager.clearFocus() }
+        else commandsExpanded = true
+    }
 
     if (isPortrait) {
         Column(
@@ -100,16 +109,18 @@ fun PatientChartScreen(
         ) {
             PatientHeader(state, compact = true, onClick = { viewModel.openPatientPicker() })
             Spacer(Modifier.height(10.dp))
-            if (!imeVisible) {
+            if (!showCommands) {
                 News2Card(state.news2)
                 Spacer(Modifier.height(10.dp))
-                VitalsGrid(state, columns = 2, onTileClick = { viewModel.openHistory(it) }, modifier = Modifier.weight(0.55f))
+                VitalsGrid(state, columns = 2, onTileClick = { viewModel.openHistory(it) }, modifier = Modifier.weight(1f))
                 Spacer(Modifier.height(10.dp))
             }
             CommandPanel(
                 state, viewModel, onDictateClick,
-                showNote = !imeVisible,
-                modifier = Modifier.weight(if (imeVisible) 1f else 0.45f)
+                collapsed = !showCommands,
+                showNote = !showCommands,
+                onToggle = toggleCommands,
+                modifier = if (showCommands) Modifier.weight(1f) else Modifier
             )
         }
     } else {
@@ -130,7 +141,9 @@ fun PatientChartScreen(
             }
             CommandPanel(
                 state, viewModel, onDictateClick,
+                collapsed = false,
                 showNote = !imeVisible,
+                onToggle = {},
                 modifier = Modifier
                     .weight(0.38f)
                     .fillMaxHeight()
@@ -434,7 +447,9 @@ private fun CommandPanel(
     state: ChartUiState,
     viewModel: ChartViewModel,
     onDictateClick: (DictationMode) -> Unit,
-    showNote: Boolean = true,
+    collapsed: Boolean,
+    showNote: Boolean,
+    onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var typed by remember { mutableStateOf("") }
@@ -442,10 +457,11 @@ private fun CommandPanel(
     val commandActive = state.listening && state.dictationMode == DictationMode.COMMAND
 
     Card(modifier = modifier) {
-        Column(modifier = Modifier
-            .padding(12.dp)
-            .fillMaxSize()) {
-
+        Column(
+            modifier = Modifier
+                .padding(12.dp)
+                .then(if (collapsed) Modifier.fillMaxWidth() else Modifier.fillMaxSize())
+        ) {
             if (showNote) {
                 NoteCard(
                     state, noteActive,
@@ -455,28 +471,67 @@ private fun CommandPanel(
                 Spacer(Modifier.height(8.dp))
             }
 
+            // Header — tapping it expands the panel (or collapses it back)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    "Voice Commands",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.weight(1f)
-                )
-                TextButton(onClick = { viewModel.toggleAccuracyMode() }, enabled = !state.switchingModel) {
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(onClick = onToggle),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        when {
-                            state.switchingModel -> "…"
-                            state.accuracyMode -> "🎯"
-                            else -> "⚡"
-                        },
-                        fontSize = 16.sp
+                        if (collapsed) "▸" else "▾",
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.primary
                     )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Voice Commands",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    if (collapsed) {
+                        Spacer(Modifier.width(8.dp))
+                        Text("tap to open log", fontSize = 12.sp, color = Color.Gray)
+                    }
                 }
-                TextButton(onClick = { viewModel.toggleTts() }) {
-                    Text(if (state.ttsMuted) "🔇" else "🔊", fontSize = 16.sp)
+                if (collapsed) {
+                    // Dictation stays one tap away while viewing the chart
+                    DictateButton(
+                        active = noteActive,
+                        idleColor = MaterialTheme.colorScheme.primary,
+                        label = "📝",
+                        onClick = { onDictateClick(DictationMode.NOTE) }
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    DictateButton(
+                        active = commandActive,
+                        idleColor = MaterialTheme.colorScheme.secondary,
+                        label = "🎤",
+                        onClick = { onDictateClick(DictationMode.COMMAND) }
+                    )
+                } else {
+                    TextButton(onClick = { viewModel.toggleAccuracyMode() }, enabled = !state.switchingModel) {
+                        Text(
+                            when {
+                                state.switchingModel -> "…"
+                                state.accuracyMode -> "🎯"
+                                else -> "⚡"
+                            },
+                            fontSize = 16.sp
+                        )
+                    }
+                    TextButton(onClick = { viewModel.toggleTts() }) {
+                        Text(if (state.ttsMuted) "🔇" else "🔊", fontSize = 16.sp)
+                    }
                 }
             }
+
+            // Collapsed: header + dictation only — no log, answer or input to
+            // overflow the chart layout.
+            if (collapsed) return@Column
+
             Spacer(Modifier.height(8.dp))
 
             state.spokenAnswer?.let { answer ->
@@ -650,7 +705,12 @@ private fun AnswerCard(text: String, onDismiss: () -> Unit) {
                 Text(
                     text,
                     fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    // A long SBAR summary must scroll inside the card, never push
+                    // the log or input field off-screen.
+                    modifier = Modifier
+                        .heightIn(max = 160.dp)
+                        .verticalScroll(rememberScrollState())
                 )
             }
             TextButton(onClick = onDismiss, contentPadding = androidx.compose.foundation.layout.PaddingValues(8.dp)) {
