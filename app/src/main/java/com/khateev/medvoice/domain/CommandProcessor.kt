@@ -86,6 +86,10 @@ class CommandProcessor(
 
         if (VoiceShortcuts.isUndo(text)) return Processed(CommandOutcome.UndoRequested)
 
+        // Chart-review queries ("any critical values?", "read the plan") are
+        // matched deterministically before classification — read-only, no model.
+        ChartQueries.match(text)?.let { return Processed(CommandOutcome.AnswerRequest(it)) }
+
         // Patient names are dynamic and unknown at training time — strip them
         // before classification, match them from the full text afterwards.
         val classifyText = PatientMatcher.stripNames(

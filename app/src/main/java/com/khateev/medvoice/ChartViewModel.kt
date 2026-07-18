@@ -15,6 +15,7 @@ import com.khateev.medvoice.data.AuditEntity
 import com.khateev.medvoice.data.ChartDatabase
 import com.khateev.medvoice.data.ChartRepository
 import com.khateev.medvoice.domain.BatchResult
+import com.khateev.medvoice.domain.ChartQuery
 import com.khateev.medvoice.domain.CommandOutcome
 import com.khateev.medvoice.domain.CommandProcessor
 import com.khateev.medvoice.domain.IntentDescriptions
@@ -112,7 +113,9 @@ data class ChartUiState(
     val ttsMuted: Boolean = false,
     val accuracyMode: Boolean = false,
     val switchingModel: Boolean = false,
-    val lastInferenceMs: Long = 0
+    val lastInferenceMs: Long = 0,
+    /** On-screen read-back of the last spoken chart-review answer (null = hidden). */
+    val spokenAnswer: String? = null
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -456,6 +459,8 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
      * escalations always speak regardless.
      */
     fun onCommand(rawText: String) {
+        // A new utterance supersedes the previous read-back answer.
+        _uiState.update { it.copy(spokenAnswer = null) }
         viewModelScope.launch {
             val candidates = _uiState.value.patients.map { PatientMatcher.Candidate(it.id, it.name) }
             val batch = commandProcessor.processAll(
@@ -581,8 +586,47 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
 
             is CommandOutcome.GenericExecuted ->
                 addLog(outcome.description, outcome.label, outcome.confidence, LogKind.OK)
+
+            is CommandOutcome.AnswerRequest -> answerQuery(outcome.query)
         }
     }
+
+    /**
+     * Voice chart review: fetch what is actually recorded, speak the answer and
+     * mirror it in an on-screen read-back card. Read-only — nothing is written.
+     * Always spoken (never muted by batch mode); numbers are shown as well
+     * because a misheard vital read aloud is a safety hazard.
+     */
+    private suspend fun answerQuery(query: ChartQuery) {
+        val state = _uiState.value
+        val pid = currentPatientId.value
+        val answer = when (query) {
+            ChartQuery.CriticalValues -> ChartAnswers.criticalValues(state.vitals, state.news2)
+            ChartQuery.News2 -> ChartAnswers.news2(state.news2)
+            ChartQuery.LatestVitals -> ChartAnswers.latestVitals(state.vitals)
+            is ChartQuery.Vital -> {
+                val history = if (pid != -1L) repository.vitalHistory(pid, query.type.name) else emptyList()
+                val latest = state.vitals[query.type]
+                val previous = history.getOrNull(history.size - 2)?.value
+                ChartAnswers.vital(query.type, latest, previous)
+            }
+            is ChartQuery.Note -> ChartAnswers.note(query.section, state.notes)
+            ChartQuery.Activity -> ChartAnswers.activity(state.actions.map { it.text })
+            ChartQuery.Summary -> ChartAnswers.summary(
+                patientName = state.currentPatient?.name ?: "",
+                ward = state.currentPatient?.ward ?: "",
+                news2 = state.news2,
+                vitals = state.vitals,
+                plan = state.notes[NoteSection.PLAN],
+                mostRecentActivity = state.actions.firstOrNull()?.text
+            )
+        }
+        _uiState.update { it.copy(spokenAnswer = answer.display) }
+        addLog("Read back: ${answer.display.replace('\n', ' ')}", "chart_review", null, LogKind.INFO)
+        speak(answer.spoken)
+    }
+
+    fun dismissAnswer() = _uiState.update { it.copy(spokenAnswer = null) }
 
     /**
      * Recording a vital also produces trend feedback ("down from 94") against

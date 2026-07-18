@@ -26,6 +26,28 @@ you dictate afterwards lands in that section. Content that merely mentions
 these words ("the patient plans to walk") is appended as text, not treated
 as navigation.
 
+## Voice chart review (ask & listen)
+
+Chart review is *reading*, not entry — so this is a different mode: you ask,
+the chart answers by voice, and the spoken answer is mirrored in an on-screen
+read-back card (a misheard vital is a hazard). Nothing is written. Recognized
+by exact phrase, no model needed. It never invents — absent data is reported
+as "no X on record".
+
+| Say | Answers with |
+|---|---|
+| "any critical values" · "any red flags" | Flagged vitals + NEWS2 status — bedside triage |
+| "catch me up" · "patient summary" · "SBAR" | Spoken SBAR handover: who, NEWS2 + trend, notable vitals, plan, last event |
+| "latest vitals" · "read the vitals" | Every vital on the chart, in order |
+| "what's the blood pressure" · "sats trend" · "latest pulse" | One vital's latest value with its trend |
+| "what's the NEWS score" | NEWS2 score and risk band |
+| "read the plan" · "read the assessment" · "read the note" | A SOAP section, or the whole note |
+| "what's been done" · "recap" | Recent chart activity from the audit log |
+
+Answers are drawn only from data MedVoice actually stores (vitals + history,
+NEWS2, SOAP notes, audit log). Medications, labs and diagnoses are recognized
+as commands but not yet stored, so they are not read back.
+
 ## NEWS2 early-warning score
 
 The chart continuously computes NEWS2 from the five voice-captured vitals

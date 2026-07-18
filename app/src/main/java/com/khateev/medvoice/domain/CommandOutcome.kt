@@ -117,6 +117,13 @@ sealed interface CommandOutcome {
         val label: String,
         val confidence: Float
     ) : CommandOutcome
+
+    /**
+     * A read-only chart-review question ("any critical values?", "read the
+     * plan"). The caller fetches the data and speaks the answer — nothing is
+     * written to the chart.
+     */
+    data class AnswerRequest(val query: ChartQuery) : CommandOutcome
 }
 
 /** True when the outcome opens a modal dialog awaiting a spoken yes/no answer. */

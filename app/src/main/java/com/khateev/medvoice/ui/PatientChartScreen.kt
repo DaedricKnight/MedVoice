@@ -479,6 +479,11 @@ private fun CommandPanel(
             }
             Spacer(Modifier.height(8.dp))
 
+            state.spokenAnswer?.let { answer ->
+                AnswerCard(answer, onDismiss = { viewModel.dismissAnswer() })
+                Spacer(Modifier.height(8.dp))
+            }
+
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -624,6 +629,33 @@ private fun NoteCard(
                     .heightIn(min = 36.dp, max = 120.dp)
                     .verticalScroll(rememberScrollState())
             )
+        }
+    }
+}
+
+@Composable
+private fun AnswerCard(text: String, onDismiss: () -> Unit) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+    ) {
+        Row(modifier = Modifier.padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 4.dp)) {
+            Text("🔊", fontSize = 15.sp, modifier = Modifier.padding(end = 8.dp, top = 2.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "Chart review",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                )
+                Text(
+                    text,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+            }
+            TextButton(onClick = onDismiss, contentPadding = androidx.compose.foundation.layout.PaddingValues(8.dp)) {
+                Text("✕", fontSize = 14.sp, color = MaterialTheme.colorScheme.onTertiaryContainer)
+            }
         }
     }
 }

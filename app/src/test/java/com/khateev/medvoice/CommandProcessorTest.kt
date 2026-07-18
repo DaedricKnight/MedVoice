@@ -5,6 +5,7 @@
  */
 package com.khateev.medvoice
 
+import com.khateev.medvoice.domain.ChartQuery
 import com.khateev.medvoice.domain.CommandOutcome
 import com.khateev.medvoice.domain.CommandProcessor
 import com.khateev.medvoice.domain.IntentClassifierPort
@@ -79,6 +80,15 @@ class CommandProcessorTest {
         val classifier = FakeClassifier("vitals_log_heart_rate")
         assertEquals(CommandOutcome.UndoRequested, outcome("scratch that", classifier))
         assertNull(classifier.lastText)
+    }
+
+    @Test
+    fun chartReviewQuery_answersWithoutClassification() {
+        val classifier = FakeClassifier("vitals_log_heart_rate")
+        val result = outcome("any critical values", classifier)
+        assertTrue(result is CommandOutcome.AnswerRequest)
+        assertEquals(ChartQuery.CriticalValues, (result as CommandOutcome.AnswerRequest).query)
+        assertNull("a read-only query must never hit the model", classifier.lastText)
     }
 
     // --- Classifier gates ---
