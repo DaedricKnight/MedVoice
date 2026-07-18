@@ -89,15 +89,15 @@ fun PatientChartScreen(
         LocalConfiguration.current.orientation != Configuration.ORIENTATION_LANDSCAPE
     val imeVisible = WindowInsets.isImeVisible
     val focusManager = LocalFocusManager.current
-    // Portrait shows EITHER the chart (all vitals + note) with Voice Commands
-    // collapsed to a small "tap to expand" label, OR the full command panel
-    // (log + answer + input) with the chart hidden. Tapping the label expands
-    // it; tapping the text field (which raises the keyboard) expands it too.
-    var commandsExpanded by remember { mutableStateOf(false) }
-    val showCommands = commandsExpanded || imeVisible
-    val toggleCommands: () -> Unit = {
-        if (showCommands) { commandsExpanded = false; focusManager.clearFocus() }
-        else commandsExpanded = true
+    // The input row (text field + mic) is ALWAYS visible. Only the activity log
+    // collapses: in the chart view it is a "tap to expand" header and the
+    // vitals grid takes the space; expanded, the log fills the panel and the
+    // grid is hidden. Typing (keyboard up) expands the log too.
+    var logExpanded by remember { mutableStateOf(false) }
+    val showLog = logExpanded || imeVisible
+    val toggleLog: () -> Unit = {
+        if (showLog) { logExpanded = false; focusManager.clearFocus() }
+        else logExpanded = true
     }
 
     if (isPortrait) {
@@ -110,22 +110,19 @@ fun PatientChartScreen(
         ) {
             PatientHeader(state, compact = true, onClick = { viewModel.openPatientPicker() })
             Spacer(Modifier.height(10.dp))
-            if (!showCommands) {
+            if (!showLog) {
                 News2Card(state.news2)
                 Spacer(Modifier.height(10.dp))
-                // Collapsed command panel is just a label, so the grid gets the
-                // full height and shows every vital.
+                // Log collapsed → grid gets the full height and shows every vital.
                 VitalsGrid(state, columns = 2, onTileClick = { viewModel.openHistory(it) }, modifier = Modifier.weight(1f))
                 Spacer(Modifier.height(10.dp))
             }
             CommandPanel(
                 state, viewModel, onDictateClick,
-                collapsed = !showCommands,
-                // Note shows in the expanded panel (hidden while typing); the
-                // collapsed label carries no note either — chart view stays vitals.
-                showNote = showCommands && !imeVisible,
-                onToggle = toggleCommands,
-                modifier = if (showCommands) Modifier.weight(1f) else Modifier
+                logExpanded = showLog,
+                showNote = showLog && !imeVisible,
+                onToggleLog = toggleLog,
+                modifier = if (showLog) Modifier.weight(1f) else Modifier
             )
         }
     } else {
@@ -146,9 +143,9 @@ fun PatientChartScreen(
             }
             CommandPanel(
                 state, viewModel, onDictateClick,
-                collapsed = false,
+                logExpanded = true,
                 showNote = !imeVisible,
-                onToggle = {},
+                onToggleLog = {},
                 modifier = Modifier
                     .weight(0.38f)
                     .fillMaxHeight()
@@ -447,52 +444,33 @@ private fun VitalsGrid(
     }
 }
 
+/**
+ * The command panel is ALWAYS visible with its text field and mic. Only the
+ * activity log (the "Voice Commands" list) collapses: in the chart view it is
+ * a "▸ Voice Commands · tap to expand log" header, and the vitals grid takes
+ * the space; expanded, the log fills the panel. The read-back answer card and
+ * the input row stay visible in both states.
+ */
 @Composable
 private fun CommandPanel(
     state: ChartUiState,
     viewModel: ChartViewModel,
     onDictateClick: (DictationMode) -> Unit,
-    collapsed: Boolean,
+    logExpanded: Boolean,
     showNote: Boolean,
-    onToggle: () -> Unit,
+    onToggleLog: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var typed by remember { mutableStateOf("") }
     val noteActive = state.listening && state.dictationMode == DictationMode.NOTE
     val commandActive = state.listening && state.dictationMode == DictationMode.COMMAND
 
-    // Chart view: a small "tap to expand" label, no commands shown at all.
-    if (collapsed) {
-        Card(
-            modifier = modifier
-                .fillMaxWidth()
-                .clickable(onClick = onToggle),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("▸", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    "Voice Commands",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.weight(1f)
-                )
-                Text("tap to expand", fontSize = 12.sp, color = Color.Gray)
-            }
-        }
-        return
-    }
-
     Card(modifier = modifier) {
-        Column(modifier = Modifier
-            .padding(12.dp)
-            .fillMaxSize()) {
-
+        Column(
+            modifier = Modifier
+                .padding(12.dp)
+                .then(if (logExpanded) Modifier.fillMaxSize() else Modifier.fillMaxWidth())
+        ) {
             if (showNote) {
                 NoteCard(
                     state, noteActive,
@@ -502,15 +480,19 @@ private fun CommandPanel(
                 Spacer(Modifier.height(8.dp))
             }
 
-            // Header — tapping the title collapses the panel back to the chart.
+            // Header toggles ONLY the log list; the input row below stays put.
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Row(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable(onClick = onToggle),
+                        .clickable(onClick = onToggleLog),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("▾", fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        if (logExpanded) "▾" else "▸",
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                     Spacer(Modifier.width(6.dp))
                     Text(
                         "Voice Commands",
@@ -518,38 +500,46 @@ private fun CommandPanel(
                         fontSize = 16.sp,
                         color = MaterialTheme.colorScheme.primary
                     )
+                    if (!logExpanded) {
+                        Spacer(Modifier.width(8.dp))
+                        Text("tap to expand log", fontSize = 12.sp, color = Color.Gray)
+                    }
                 }
-                TextButton(onClick = { viewModel.toggleAccuracyMode() }, enabled = !state.switchingModel) {
-                    Text(
-                        when {
-                            state.switchingModel -> "…"
-                            state.accuracyMode -> "🎯"
-                            else -> "⚡"
-                        },
-                        fontSize = 16.sp
-                    )
-                }
-                TextButton(onClick = { viewModel.toggleTts() }) {
-                    Text(if (state.ttsMuted) "🔇" else "🔊", fontSize = 16.sp)
+                if (logExpanded) {
+                    TextButton(onClick = { viewModel.toggleAccuracyMode() }, enabled = !state.switchingModel) {
+                        Text(
+                            when {
+                                state.switchingModel -> "…"
+                                state.accuracyMode -> "🎯"
+                                else -> "⚡"
+                            },
+                            fontSize = 16.sp
+                        )
+                    }
+                    TextButton(onClick = { viewModel.toggleTts() }) {
+                        Text(if (state.ttsMuted) "🔇" else "🔊", fontSize = 16.sp)
+                    }
                 }
             }
-            Spacer(Modifier.height(8.dp))
 
-            state.spokenAnswer?.let { answer ->
-                AnswerCard(answer, onDismiss = { viewModel.dismissAnswer() })
+            if (logExpanded) {
                 Spacer(Modifier.height(8.dp))
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(state.actions) { entry -> LogRow(entry) }
+                }
             }
 
-            // weight(1f) so the log — not the input row — absorbs the slack and
-            // shrinks; the text field and mic stay pinned and visible.
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                items(state.actions) { entry -> LogRow(entry) }
+            // Read-back answer — bounded, shown in both states when present.
+            state.spokenAnswer?.let { answer ->
+                Spacer(Modifier.height(8.dp))
+                AnswerCard(answer, onDismiss = { viewModel.dismissAnswer() })
             }
 
             if (state.partialText.isNotBlank()) {
+                Spacer(Modifier.height(8.dp))
                 Text(
                     "“${state.partialText}”",
                     color = Color.Gray,
@@ -560,6 +550,7 @@ private fun CommandPanel(
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
+            // Input row — ALWAYS visible, in every mode.
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = typed,
