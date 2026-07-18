@@ -59,6 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -86,9 +87,18 @@ fun PatientChartScreen(
     val state by viewModel.uiState.collectAsState()
     val isPortrait =
         LocalConfiguration.current.orientation != Configuration.ORIENTATION_LANDSCAPE
-    // While the keyboard is up the screen shrinks, so the vitals grid and note
-    // are hidden to give the command panel the full height for typing.
     val imeVisible = WindowInsets.isImeVisible
+    val focusManager = LocalFocusManager.current
+    // Portrait shows EITHER the chart (all vitals + note) with Voice Commands
+    // collapsed to a small "tap to expand" label, OR the full command panel
+    // (log + answer + input) with the chart hidden. Tapping the label expands
+    // it; tapping the text field (which raises the keyboard) expands it too.
+    var commandsExpanded by remember { mutableStateOf(false) }
+    val showCommands = commandsExpanded || imeVisible
+    val toggleCommands: () -> Unit = {
+        if (showCommands) { commandsExpanded = false; focusManager.clearFocus() }
+        else commandsExpanded = true
+    }
 
     if (isPortrait) {
         Column(
@@ -100,18 +110,22 @@ fun PatientChartScreen(
         ) {
             PatientHeader(state, compact = true, onClick = { viewModel.openPatientPicker() })
             Spacer(Modifier.height(10.dp))
-            if (!imeVisible) {
+            if (!showCommands) {
                 News2Card(state.news2)
                 Spacer(Modifier.height(10.dp))
-                // Kept a bit smaller (grid scrolls) so the command panel below
-                // always has room for its text field and mic.
-                VitalsGrid(state, columns = 2, onTileClick = { viewModel.openHistory(it) }, modifier = Modifier.weight(0.42f))
+                // Collapsed command panel is just a label, so the grid gets the
+                // full height and shows every vital.
+                VitalsGrid(state, columns = 2, onTileClick = { viewModel.openHistory(it) }, modifier = Modifier.weight(1f))
                 Spacer(Modifier.height(10.dp))
             }
             CommandPanel(
                 state, viewModel, onDictateClick,
-                showNote = !imeVisible,
-                modifier = Modifier.weight(if (imeVisible) 1f else 0.58f)
+                collapsed = !showCommands,
+                // Note shows in the expanded panel (hidden while typing); the
+                // collapsed label carries no note either — chart view stays vitals.
+                showNote = showCommands && !imeVisible,
+                onToggle = toggleCommands,
+                modifier = if (showCommands) Modifier.weight(1f) else Modifier
             )
         }
     } else {
@@ -132,7 +146,9 @@ fun PatientChartScreen(
             }
             CommandPanel(
                 state, viewModel, onDictateClick,
+                collapsed = false,
                 showNote = !imeVisible,
+                onToggle = {},
                 modifier = Modifier
                     .weight(0.38f)
                     .fillMaxHeight()
@@ -436,12 +452,41 @@ private fun CommandPanel(
     state: ChartUiState,
     viewModel: ChartViewModel,
     onDictateClick: (DictationMode) -> Unit,
-    showNote: Boolean = true,
+    collapsed: Boolean,
+    showNote: Boolean,
+    onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var typed by remember { mutableStateOf("") }
     val noteActive = state.listening && state.dictationMode == DictationMode.NOTE
     val commandActive = state.listening && state.dictationMode == DictationMode.COMMAND
+
+    // Chart view: a small "tap to expand" label, no commands shown at all.
+    if (collapsed) {
+        Card(
+            modifier = modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggle),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("▸", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    "Voice Commands",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f)
+                )
+                Text("tap to expand", fontSize = 12.sp, color = Color.Gray)
+            }
+        }
+        return
+    }
 
     Card(modifier = modifier) {
         Column(modifier = Modifier
@@ -457,14 +502,23 @@ private fun CommandPanel(
                 Spacer(Modifier.height(8.dp))
             }
 
+            // Header — tapping the title collapses the panel back to the chart.
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    "Voice Commands",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.weight(1f)
-                )
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(onClick = onToggle),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("▾", fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Voice Commands",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
                 TextButton(onClick = { viewModel.toggleAccuracyMode() }, enabled = !state.switchingModel) {
                     Text(
                         when {
