@@ -3,7 +3,7 @@
  * Proprietary and confidential.
  * Unauthorized copying of this file, via any medium is strictly prohibited.
  */
-package com.khateev.medvoice
+package com.khateev.medvoice.domain.model
 
 /**
  * Clinical range validation, distinct from the ASR confidence threshold: the

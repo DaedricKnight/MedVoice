@@ -9,7 +9,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.khateev.medvoice.domain.CommandProcessor
 import com.khateev.medvoice.ml.MedIntentClassifier
-import com.khateev.medvoice.ml.VitalsExtractor
+import com.khateev.medvoice.domain.VitalsExtractor
 import com.khateev.medvoice.speech.SileroVad
 import com.khateev.medvoice.speech.UtteranceSegmenter
 import com.khateev.medvoice.speech.WhisperEngine
@@ -172,16 +172,16 @@ class VoicePipelineTest {
     @Test
     fun openChartByName_selectsPatientThroughFullPipeline() {
         val patients = listOf(
-            com.khateev.medvoice.ml.PatientMatcher.Candidate(1, "John Doe"),
-            com.khateev.medvoice.ml.PatientMatcher.Candidate(2, "Jane Roe"),
-            com.khateev.medvoice.ml.PatientMatcher.Candidate(3, "Robert Miles")
+            com.khateev.medvoice.domain.PatientMatcher.Candidate(1, "John Doe"),
+            com.khateev.medvoice.domain.PatientMatcher.Candidate(2, "Jane Roe"),
+            com.khateev.medvoice.domain.PatientMatcher.Candidate(3, "Robert Miles")
         )
         val prompt = WhisperEngine.MEDICAL_PROMPT + " Patients: John Doe, Jane Roe, Robert Miles."
         val text = runBlocking {
             whisper.transcribe(loadWavPcm("tts/openchart_samantha.wav"), prompt)
         }
         val normalized = VitalsExtractor.normalizeNumbers(text)
-        val classifyText = com.khateev.medvoice.ml.PatientMatcher.stripNames(
+        val classifyText = com.khateev.medvoice.domain.PatientMatcher.stripNames(
             VitalsExtractor.sanitizeForClassification(normalized), patients
         )
         val result = runBlocking { classifier.classify(classifyText) }
@@ -190,7 +190,7 @@ class VoicePipelineTest {
             "low confidence ${result?.confidence} for \"$classifyText\"",
             result!!.confidence >= CommandProcessor.DEFAULT_CONFIDENCE_THRESHOLD
         )
-        val matched = com.khateev.medvoice.ml.PatientMatcher.match(normalized, patients)
+        val matched = com.khateev.medvoice.domain.PatientMatcher.match(normalized, patients)
         assertEquals("text=\"$text\"", 2L, matched?.id)
     }
 

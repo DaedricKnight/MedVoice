@@ -5,8 +5,8 @@
  */
 package com.khateev.medvoice
 
-import com.khateev.medvoice.ml.PatientMatcher
-import com.khateev.medvoice.ml.PatientMatcher.Candidate
+import com.khateev.medvoice.domain.PatientMatcher
+import com.khateev.medvoice.domain.PatientMatcher.Candidate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

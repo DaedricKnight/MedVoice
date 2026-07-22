@@ -5,8 +5,8 @@
  */
 package com.khateev.medvoice.domain
 
-import com.khateev.medvoice.NoteSection
-import com.khateev.medvoice.VitalType
+import com.khateev.medvoice.domain.model.NoteSection
+import com.khateev.medvoice.domain.model.VitalType
 
 /**
  * A read-only "chart review" request: the clinician asks and the chart answers
@@ -42,7 +42,7 @@ sealed interface ChartQuery {
 /**
  * Deterministic exact-phrase matcher for chart-review queries — no model, no
  * retraining (Phase 1). Matched in the pipeline before classification, like
- * [com.khateev.medvoice.ml.VoiceShortcuts]. Whole-utterance match keeps it
+ * [com.khateev.medvoice.domain.VoiceShortcuts]. Whole-utterance match keeps it
  * safe: only a standalone question triggers a read-back, never a stray word
  * inside a command.
  */

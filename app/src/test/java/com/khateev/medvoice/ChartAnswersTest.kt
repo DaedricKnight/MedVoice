@@ -4,6 +4,12 @@
  * Unauthorized copying of this file, via any medium is strictly prohibited.
  */
 package com.khateev.medvoice
+import com.khateev.medvoice.domain.ChartAnswers
+import com.khateev.medvoice.domain.model.FluidTotals
+import com.khateev.medvoice.domain.model.NoteSection
+import com.khateev.medvoice.domain.model.News2
+import com.khateev.medvoice.domain.model.VitalValue
+import com.khateev.medvoice.domain.model.VitalType
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

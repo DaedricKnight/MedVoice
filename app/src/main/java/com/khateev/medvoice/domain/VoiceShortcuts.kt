@@ -3,7 +3,7 @@
  * Proprietary and confidential.
  * Unauthorized copying of this file, via any medium is strictly prohibited.
  */
-package com.khateev.medvoice.ml
+package com.khateev.medvoice.domain
 
 /**
  * Short spoken phrases handled BEFORE intent classification: dialog

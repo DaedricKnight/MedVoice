@@ -21,8 +21,15 @@ import com.khateev.medvoice.domain.CommandProcessor
 import com.khateev.medvoice.domain.FluidMatcher
 import com.khateev.medvoice.domain.IntentDescriptions
 import com.khateev.medvoice.domain.NoteSectionCommands
+import com.khateev.medvoice.domain.ChartAnswers
+import com.khateev.medvoice.domain.model.FluidTotals
+import com.khateev.medvoice.domain.model.News2
+import com.khateev.medvoice.domain.model.NoteSection
+import com.khateev.medvoice.domain.model.VitalAlerts
+import com.khateev.medvoice.domain.model.VitalType
+import com.khateev.medvoice.domain.model.VitalValue
 import com.khateev.medvoice.ml.MedIntentClassifier
-import com.khateev.medvoice.ml.PatientMatcher
+import com.khateev.medvoice.domain.PatientMatcher
 import com.khateev.medvoice.speech.WhisperEngine
 import com.khateev.medvoice.speech.WhisperInputManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,95 +42,6 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
-enum class VitalType(val display: String, val unit: String) {
-    BLOOD_PRESSURE("Blood Pressure", "mmHg"),
-    HEART_RATE("Heart Rate", "bpm"),
-    TEMPERATURE("Temperature", "°C"),
-    OXYGEN_SATURATION("SpO₂", "%"),
-    RESPIRATORY_RATE("Resp. Rate", "/min"),
-    WEIGHT("Weight", "kg"),
-    PAIN_LEVEL("Pain Level", "/10")
-}
-
-data class VitalValue(val value: String, val time: String, val critical: Boolean = false)
-
-enum class LogKind { OK, WARN, ERROR, INFO }
-
-data class LogEntry(
-    val time: String,
-    val text: String,
-    val intent: String?,
-    val confidence: Float?,
-    val kind: LogKind
-)
-
-/**
- * A modal action awaiting a spoken yes/no. [suggestion] distinguishes a
- * "did you mean …?" guess (executed on confirm) from a critical-intent
- * confirmation (only acknowledged — the prototype never executes those).
- */
-data class PendingAction(
-    val intent: String,
-    val description: String,
-    val rawText: String,
-    val confidence: Float? = null,
-    val suggestion: Boolean = false,
-    /** Non-null for a patient-switch confirmation: the chart to open on confirm. */
-    val switchToPatientId: Long? = null
-)
-
-enum class DictationMode { COMMAND, NOTE }
-
-/** SOAP clinical note structure; [spoken] is the word used in voice navigation. */
-enum class NoteSection(val display: String, val spoken: String) {
-    SUBJECTIVE("Subjective", "subjective"),
-    OBJECTIVE("Objective", "objective"),
-    ASSESSMENT("Assessment", "assessment"),
-    PLAN("Plan", "plan")
-}
-
-data class PatientUi(val id: Long, val name: String, val mrn: String, val ward: String)
-
-/** Running fluid balance (I/O) totals for the current patient. */
-data class FluidTotals(val intakeMl: Int, val outputMl: Int, val count: Int) {
-    val balanceMl: Int get() = intakeMl - outputMl
-}
-
-/** One measurement in the history sheet; BP carries two series (sys/dia). */
-data class HistoryPoint(
-    val display: String,
-    val primary: Double?,
-    val secondary: Double?,
-    val time: String,
-    val critical: Boolean = false
-)
-
-data class ChartUiState(
-    val modelReady: Boolean = false,
-    val listening: Boolean = false,
-    val dictationMode: DictationMode = DictationMode.COMMAND,
-    val partialText: String = "",
-    val notes: Map<NoteSection, String> = emptyMap(),
-    val activeSection: NoteSection = NoteSection.SUBJECTIVE,
-    val news2: News2.Assessment? = null,
-    val patients: List<PatientUi> = emptyList(),
-    val currentPatient: PatientUi? = null,
-    val showPatientPicker: Boolean = false,
-    val showAddPatient: Boolean = false,
-    val vitals: Map<VitalType, VitalValue> = emptyMap(),
-    val fluids: FluidTotals? = null,
-    val actions: List<LogEntry> = emptyList(),
-    val pendingAction: PendingAction? = null,
-    val historyType: VitalType? = null,
-    val historyPoints: List<HistoryPoint> = emptyList(),
-    val ttsMuted: Boolean = false,
-    val accuracyMode: Boolean = false,
-    val switchingModel: Boolean = false,
-    val lastInferenceMs: Long = 0,
-    /** On-screen read-back of the last spoken chart-review answer (null = hidden). */
-    val spokenAnswer: String? = null
-)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChartViewModel(application: Application) : AndroidViewModel(application) {

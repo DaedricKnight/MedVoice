@@ -3,7 +3,7 @@
  * Proprietary and confidential.
  * Unauthorized copying of this file, via any medium is strictly prohibited.
  */
-package com.khateev.medvoice.ml
+package com.khateev.medvoice.domain
 
 /**
  * Resolves a patient mentioned in a dictated phrase against the known patient

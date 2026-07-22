@@ -5,7 +5,7 @@
  */
 package com.khateev.medvoice.domain
 
-import com.khateev.medvoice.NoteSection
+import com.khateev.medvoice.domain.model.NoteSection
 
 /**
  * Voice navigation between SOAP note sections during note dictation.

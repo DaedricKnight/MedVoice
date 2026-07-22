@@ -5,7 +5,7 @@
  */
 package com.khateev.medvoice
 
-import com.khateev.medvoice.ml.VitalsExtractor
+import com.khateev.medvoice.domain.VitalsExtractor
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

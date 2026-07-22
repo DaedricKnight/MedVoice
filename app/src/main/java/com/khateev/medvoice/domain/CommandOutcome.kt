@@ -5,8 +5,8 @@
  */
 package com.khateev.medvoice.domain
 
-import com.khateev.medvoice.VitalAlerts
-import com.khateev.medvoice.VitalType
+import com.khateev.medvoice.domain.model.VitalAlerts
+import com.khateev.medvoice.domain.model.VitalType
 
 /**
  * Everything a spoken command can DECIDE, expressed as data. The processor

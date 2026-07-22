@@ -4,6 +4,7 @@
  * Unauthorized copying of this file, via any medium is strictly prohibited.
  */
 package com.khateev.medvoice
+import com.khateev.medvoice.domain.model.VitalType
 
 import com.khateev.medvoice.domain.ChartQuery
 import com.khateev.medvoice.domain.CommandOutcome
@@ -11,7 +12,7 @@ import com.khateev.medvoice.domain.CommandProcessor
 import com.khateev.medvoice.domain.FluidMatcher
 import com.khateev.medvoice.domain.IntentClassifierPort
 import com.khateev.medvoice.domain.IntentResult
-import com.khateev.medvoice.ml.PatientMatcher
+import com.khateev.medvoice.domain.PatientMatcher
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

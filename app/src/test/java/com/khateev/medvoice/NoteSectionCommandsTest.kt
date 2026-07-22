@@ -4,6 +4,7 @@
  * Unauthorized copying of this file, via any medium is strictly prohibited.
  */
 package com.khateev.medvoice
+import com.khateev.medvoice.domain.model.NoteSection
 
 import com.khateev.medvoice.domain.NoteSectionCommands
 import org.junit.Assert.assertEquals

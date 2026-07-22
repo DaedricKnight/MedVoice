@@ -71,13 +71,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import com.khateev.medvoice.ChartUiState
 import com.khateev.medvoice.ChartViewModel
 import com.khateev.medvoice.DictationMode
-import com.khateev.medvoice.FluidTotals
+import com.khateev.medvoice.domain.model.FluidTotals
 import com.khateev.medvoice.HistoryPoint
 import com.khateev.medvoice.LogEntry
 import com.khateev.medvoice.LogKind
-import com.khateev.medvoice.News2
-import com.khateev.medvoice.NoteSection
-import com.khateev.medvoice.VitalType
+import com.khateev.medvoice.domain.model.News2
+import com.khateev.medvoice.domain.model.NoteSection
+import com.khateev.medvoice.domain.model.VitalType
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

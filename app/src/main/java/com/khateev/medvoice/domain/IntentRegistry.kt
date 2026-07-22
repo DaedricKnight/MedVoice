@@ -5,10 +5,10 @@
  */
 package com.khateev.medvoice.domain
 
-import com.khateev.medvoice.VitalAlerts
-import com.khateev.medvoice.VitalType
-import com.khateev.medvoice.ml.PatientMatcher
-import com.khateev.medvoice.ml.VitalsExtractor
+import com.khateev.medvoice.domain.model.VitalAlerts
+import com.khateev.medvoice.domain.model.VitalType
+
+
 
 /** Everything a handler needs to decide an outcome. */
 data class IntentRequest(

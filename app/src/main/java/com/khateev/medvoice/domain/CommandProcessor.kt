@@ -5,9 +5,9 @@
  */
 package com.khateev.medvoice.domain
 
-import com.khateev.medvoice.ml.PatientMatcher
-import com.khateev.medvoice.ml.VitalsExtractor
-import com.khateev.medvoice.ml.VoiceShortcuts
+
+
+
 
 /**
  * The complete spoken-command pipeline as a pure, JVM-testable unit:

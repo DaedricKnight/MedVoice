@@ -5,7 +5,7 @@
  */
 package com.khateev.medvoice.domain
 
-import com.khateev.medvoice.VitalType
+import com.khateev.medvoice.domain.model.VitalType
 
 object IntentDescriptions {
 

@@ -5,7 +5,7 @@
  */
 package com.khateev.medvoice
 
-import com.khateev.medvoice.ml.VoiceShortcuts
+import com.khateev.medvoice.domain.VoiceShortcuts
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test

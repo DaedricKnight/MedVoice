@@ -3,9 +3,15 @@
  * Proprietary and confidential.
  * Unauthorized copying of this file, via any medium is strictly prohibited.
  */
-package com.khateev.medvoice
+package com.khateev.medvoice.domain
 
-import com.khateev.medvoice.domain.IntentDescriptions
+import com.khateev.medvoice.domain.model.FluidTotals
+import com.khateev.medvoice.domain.model.News2
+import com.khateev.medvoice.domain.model.NoteSection
+import com.khateev.medvoice.domain.model.VitalType
+import com.khateev.medvoice.domain.model.VitalValue
+
+
 
 /**
  * Builds the spoken + on-screen answers for voice chart review from data that
