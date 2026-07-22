@@ -5,6 +5,8 @@
  */
 package com.khateev.medvoice.domain
 
+import com.khateev.medvoice.domain.model.AssessmentStatus
+import com.khateev.medvoice.domain.model.AssessmentSystem
 import com.khateev.medvoice.domain.model.VitalAlerts
 import com.khateev.medvoice.domain.model.VitalType
 
@@ -130,6 +132,16 @@ sealed interface CommandOutcome {
         val kind: FluidMatcher.Kind,
         val category: String,
         val amountMl: Int
+    ) : CommandOutcome
+
+    /**
+     * A structured nursing assessment. [systems] holds every system in the
+     * head-to-toe shortcut, or a single one for "skin within normal limits".
+     */
+    data class AssessmentRecorded(
+        val systems: List<AssessmentSystem>,
+        val status: AssessmentStatus,
+        val finding: String?
     ) : CommandOutcome
 }
 

@@ -35,6 +35,9 @@ sealed interface ChartQuery {
     /** Fluid balance (I/O): total intake, total output and net. */
     data object FluidBalance : ChartQuery
 
+    /** Structured nursing assessment status per body system. */
+    data object Assessments : ChartQuery
+
     /** A synthesized SBAR-style spoken handover summary ("catch me up"). */
     data object Summary : ChartQuery
 }
@@ -111,6 +114,12 @@ object ChartQueries {
             "how much intake", "how much output", "how much urine", "urine output",
             "ins and outs", "i and o", "intake and output",
         ).forEach { putIfAbsent(it, ChartQuery.FluidBalance) }
+
+        listOf(
+            "assessment status", "assessments", "what is abnormal", "whats abnormal",
+            "anything abnormal on assessment", "assessment summary",
+            "which systems are abnormal", "head to toe status",
+        ).forEach { putIfAbsent(it, ChartQuery.Assessments) }
 
         listOf(
             "catch me up", "patient summary", "give me a summary", "give me the summary",

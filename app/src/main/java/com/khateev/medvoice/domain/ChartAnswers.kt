@@ -5,6 +5,9 @@
  */
 package com.khateev.medvoice.domain
 
+import com.khateev.medvoice.domain.model.AssessmentResult
+import com.khateev.medvoice.domain.model.AssessmentStatus
+import com.khateev.medvoice.domain.model.AssessmentSystem
 import com.khateev.medvoice.domain.model.FluidTotals
 import com.khateev.medvoice.domain.model.News2
 import com.khateev.medvoice.domain.model.NoteSection
@@ -103,6 +106,31 @@ object ChartAnswers {
         )
     }
 
+    // --- Structured nursing assessments ---
+
+    fun assessments(assessments: Map<AssessmentSystem, AssessmentResult>): Answer {
+        if (assessments.isEmpty()) return same("No systems assessed yet.")
+        val abnormal = AssessmentSystem.entries.filter {
+            assessments[it]?.status == AssessmentStatus.ABNORMAL
+        }
+        val normalCount = assessments.count { it.value.status == AssessmentStatus.NORMAL }
+        val notAssessed = AssessmentSystem.entries.count { assessments[it] == null }
+
+        val parts = mutableListOf<String>()
+        if (normalCount > 0) parts += "$normalCount within normal limits"
+        if (abnormal.isNotEmpty()) {
+            parts += abnormal.joinToString(", ") { system ->
+                val finding = assessments[system]?.finding
+                "${system.display} abnormal" + (finding?.let { " — $it" } ?: "")
+            }
+        }
+        if (notAssessed > 0) parts += "$notAssessed not assessed"
+        return Answer(
+            spoken = "Assessment: " + parts.joinToString(". ") + ".",
+            display = "Assessment: " + parts.joinToString(" · ")
+        )
+    }
+
     // --- Activity ---
 
     fun activity(recentMessages: List<String>): Answer {
@@ -122,6 +150,7 @@ object ChartAnswers {
         news2: News2.Assessment?,
         vitals: Map<VitalType, VitalValue>,
         fluids: FluidTotals?,
+        assessments: Map<AssessmentSystem, AssessmentResult>,
         plan: String?,
         mostRecentActivity: String?
     ): Answer {
@@ -155,6 +184,18 @@ object ChartAnswers {
             val netPhrase = if (net > 0) "net positive $net" else if (net < 0) "net negative ${-net}" else "even"
             spoken.append("Fluid balance $netPhrase millilitres. ")
             display.append("Fluids: in ${fluids.intakeMl} / out ${fluids.outputMl} / net ${if (net > 0) "+$net" else "$net"} mL\n")
+        }
+
+        // Only abnormal systems are worth a handover mention.
+        val abnormal = AssessmentSystem.entries.filter {
+            assessments[it]?.status == AssessmentStatus.ABNORMAL
+        }
+        if (abnormal.isNotEmpty()) {
+            val list = abnormal.joinToString(", ") { system ->
+                system.display + (assessments[system]?.finding?.let { " — $it" } ?: "")
+            }
+            spoken.append("Assessment abnormal: $list. ")
+            display.append("Assessment abnormal: $list\n")
         }
 
         if (!plan.isNullOrBlank()) {

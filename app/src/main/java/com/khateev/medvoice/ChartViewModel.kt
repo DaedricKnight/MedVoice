@@ -22,6 +22,9 @@ import com.khateev.medvoice.domain.FluidMatcher
 import com.khateev.medvoice.domain.IntentDescriptions
 import com.khateev.medvoice.domain.NoteSectionCommands
 import com.khateev.medvoice.domain.ChartAnswers
+import com.khateev.medvoice.domain.model.AssessmentResult
+import com.khateev.medvoice.domain.model.AssessmentStatus
+import com.khateev.medvoice.domain.model.AssessmentSystem
 import com.khateev.medvoice.domain.model.FluidTotals
 import com.khateev.medvoice.domain.model.News2
 import com.khateev.medvoice.domain.model.NoteSection
@@ -143,6 +146,20 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
             }
             launch {
                 currentPatientId.filter { it != -1L }.flatMapLatest { pid ->
+                    repository.assessments(pid)
+                }.collect { rows ->
+                    val map = rows.mapNotNull { row ->
+                        val system = runCatching { AssessmentSystem.valueOf(row.system) }.getOrNull()
+                        val status = runCatching { AssessmentStatus.valueOf(row.status) }.getOrNull()
+                        if (system != null && status != null) {
+                            system to AssessmentResult(status, row.finding, formatTime(row.timestamp))
+                        } else null
+                    }.toMap()
+                    _uiState.update { it.copy(assessments = map) }
+                }
+            }
+            launch {
+                currentPatientId.filter { it != -1L }.flatMapLatest { pid ->
                     repository.fluids(pid)
                 }.collect { rows ->
                     val totals = if (rows.isEmpty()) null else FluidTotals(
@@ -257,24 +274,36 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- Undo ---
 
-    /** Undoes the most recent entry — vital or fluid — whichever was recorded last. */
+    /**
+     * Undoes the most recent chart entry — vital, fluid or assessment —
+     * whichever carries the newest timestamp.
+     */
     private fun undoLast() {
         val pid = currentPatientId.value
         if (pid == -1L) return
         viewModelScope.launch {
             val lastVital = repository.lastVital(pid)
             val lastFluid = repository.lastFluid(pid)
-            val fluidIsNewer = lastFluid != null &&
-                (lastVital == null || lastFluid.timestamp >= lastVital.timestamp)
+            val lastAssessment = repository.lastAssessment(pid)
 
-            val message = when {
-                lastVital == null && lastFluid == null -> {
-                    addLog("Nothing to undo", "undo", null, LogKind.WARN)
-                    speak("Nothing to undo")
-                    return@launch
+            val newest = listOfNotNull(
+                lastVital?.timestamp, lastFluid?.timestamp, lastAssessment?.timestamp
+            ).maxOrNull()
+            if (newest == null) {
+                addLog("Nothing to undo", "undo", null, LogKind.WARN)
+                speak("Nothing to undo")
+                return@launch
+            }
+
+            val message = when (newest) {
+                lastAssessment?.timestamp -> {
+                    repository.deleteAssessment(lastAssessment.id)
+                    val system = runCatching { AssessmentSystem.valueOf(lastAssessment.system) }
+                        .getOrNull()?.display ?: lastAssessment.system
+                    "Removed $system assessment"
                 }
-                fluidIsNewer -> {
-                    repository.deleteFluid(lastFluid!!.id)
+                lastFluid?.timestamp -> {
+                    repository.deleteFluid(lastFluid.id)
                     val kind = runCatching { FluidMatcher.Kind.valueOf(lastFluid.kind) }
                         .getOrDefault(FluidMatcher.Kind.OUTPUT)
                     "Removed ${fluidName(kind, lastFluid.category)}: ${lastFluid.amountMl} mL"
@@ -492,6 +521,37 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
 
             is CommandOutcome.VitalRecorded -> renderVitalRecorded(outcome, quiet)
 
+            is CommandOutcome.AssessmentRecorded -> {
+                val pid = currentPatientId.value
+                if (pid != -1L) {
+                    outcome.systems.forEach { system ->
+                        repository.recordAssessment(
+                            pid, system.name, outcome.status.name, outcome.finding
+                        )
+                    }
+                }
+                val normal = outcome.status == AssessmentStatus.NORMAL
+                val message = when {
+                    outcome.systems.size > 1 ->
+                        "Head-to-toe assessment recorded: all ${outcome.systems.size} systems within normal limits"
+                    normal -> "${outcome.systems.first().display} assessed: within normal limits"
+                    else -> "${outcome.systems.first().display} assessed: ABNORMAL" +
+                        (outcome.finding?.let { " — $it" } ?: "")
+                }
+                addLog(message, "assessment", null, if (normal) LogKind.OK else LogKind.WARN)
+                if (!quiet || !normal) {
+                    speak(
+                        when {
+                            outcome.systems.size > 1 -> "Head to toe assessment recorded, all systems normal"
+                            normal -> "${outcome.systems.first().display} within normal limits"
+                            else -> "${outcome.systems.first().display} abnormal" +
+                                (outcome.finding?.let { ", $it" } ?: "") +
+                                ". Say scratch that if this is a mistake"
+                        }
+                    )
+                }
+            }
+
             is CommandOutcome.FluidRecorded -> {
                 val pid = currentPatientId.value
                 if (pid != -1L) repository.recordFluid(pid, outcome.kind.name, outcome.category, outcome.amountMl)
@@ -573,12 +633,14 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
             is ChartQuery.Note -> ChartAnswers.note(query.section, state.notes)
             ChartQuery.Activity -> ChartAnswers.activity(state.actions.map { it.text })
             ChartQuery.FluidBalance -> ChartAnswers.fluidBalance(state.fluids)
+            ChartQuery.Assessments -> ChartAnswers.assessments(state.assessments)
             ChartQuery.Summary -> ChartAnswers.summary(
                 patientName = state.currentPatient?.name ?: "",
                 ward = state.currentPatient?.ward ?: "",
                 news2 = state.news2,
                 vitals = state.vitals,
                 fluids = state.fluids,
+                assessments = state.assessments,
                 plan = state.notes[NoteSection.PLAN],
                 mostRecentActivity = state.actions.firstOrNull()?.text
             )

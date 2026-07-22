@@ -96,6 +96,12 @@ class CommandProcessor(
             return Processed(CommandOutcome.FluidRecorded(it.kind, it.category, it.amountMl))
         }
 
+        // Structured nursing assessments ("skin within normal limits", "head to
+        // toe WNL") — a system plus a status phrase, also outside the model.
+        AssessmentMatcher.match(text)?.let {
+            return Processed(CommandOutcome.AssessmentRecorded(it.systems, it.status, it.finding))
+        }
+
         // Patient names are dynamic and unknown at training time — strip them
         // before classification, match them from the full text afterwards.
         val classifyText = PatientMatcher.stripNames(

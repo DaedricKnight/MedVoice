@@ -26,6 +26,29 @@ you dictate afterwards lands in that section. Content that merely mentions
 these words ("the patient plans to walk") is appended as text, not treated
 as navigation.
 
+## Structured nursing assessments
+
+The routine head-to-toe assessment is a huge share of flowsheet entries, and
+most of them just confirm "within normal limits". MedVoice records them by
+voice with a deterministic matcher (body system + status phrase) — no model,
+no retraining.
+
+| Say | Records |
+|---|---|
+| **"head to toe within normal limits"** · "all systems normal" | **All 7 systems normal in one utterance** |
+| "skin within normal limits" · "skin intact" · "neuro WNL" | That system normal |
+| "chest clear" · "abdomen unremarkable" · "mobility no issues" | Respiratory / GI / Mobility normal |
+| "skin abnormal, redness on the sacrum" | Skin abnormal + the finding |
+| "skin not intact" · "mobility impaired" | That system abnormal |
+
+Systems: **N**euro, **R**espiratory, **C**ardiovascular, **G**I, **S**kin,
+**W**ound, **M**obility — shown as coloured chips (green normal, red abnormal,
+grey not assessed). A status phrase is required, so "respiratory rate 18"
+stays a vital and "page the neurologist" stays a command. Abnormal findings
+are read back with an undo hint, "scratch that" undoes the last assessment,
+and asking **"assessment status"** or **"what's abnormal"** reads the summary;
+abnormal systems also appear in the SBAR "catch me up".
+
 ## Fluid balance (intake / output)
 
 Nurses key ~640 flowsheet points per shift, mostly I/O. MedVoice records these

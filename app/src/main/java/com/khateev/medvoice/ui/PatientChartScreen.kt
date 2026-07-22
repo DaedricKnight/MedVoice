@@ -71,6 +71,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import com.khateev.medvoice.ChartUiState
 import com.khateev.medvoice.ChartViewModel
 import com.khateev.medvoice.DictationMode
+import com.khateev.medvoice.domain.model.AssessmentResult
+import com.khateev.medvoice.domain.model.AssessmentStatus
+import com.khateev.medvoice.domain.model.AssessmentSystem
 import com.khateev.medvoice.domain.model.FluidTotals
 import com.khateev.medvoice.HistoryPoint
 import com.khateev.medvoice.LogEntry
@@ -115,6 +118,8 @@ fun PatientChartScreen(
                 News2Card(state.news2)
                 Spacer(Modifier.height(8.dp))
                 FluidCard(state.fluids)
+                Spacer(Modifier.height(8.dp))
+                AssessmentCard(state.assessments)
                 Spacer(Modifier.height(10.dp))
                 // Log collapsed → grid gets the full height and shows every vital.
                 VitalsGrid(state, columns = 2, onTileClick = { viewModel.openHistory(it) }, modifier = Modifier.weight(1f))
@@ -143,6 +148,8 @@ fun PatientChartScreen(
                 News2Card(state.news2)
                 Spacer(Modifier.height(8.dp))
                 FluidCard(state.fluids)
+                Spacer(Modifier.height(8.dp))
+                AssessmentCard(state.assessments)
                 Spacer(Modifier.height(12.dp))
                 VitalsGrid(state, columns = 3, onTileClick = { viewModel.openHistory(it) }, modifier = Modifier.fillMaxSize())
             }
@@ -714,6 +721,43 @@ private fun AnswerCard(text: String, onDismiss: () -> Unit) {
             }
             TextButton(onClick = onDismiss, contentPadding = androidx.compose.foundation.layout.PaddingValues(8.dp)) {
                 Text("✕", fontSize = 14.sp, color = MaterialTheme.colorScheme.onTertiaryContainer)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AssessmentCard(assessments: Map<AssessmentSystem, AssessmentResult>) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Assessment",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.weight(1f)
+            )
+            AssessmentSystem.entries.forEach { system ->
+                val result = assessments[system]
+                val (bg, fg) = when (result?.status) {
+                    AssessmentStatus.NORMAL -> Color(0xFF1B998B) to Color.White
+                    AssessmentStatus.ABNORMAL -> MaterialTheme.colorScheme.error to Color.White
+                    null -> MaterialTheme.colorScheme.surface to Color.Gray
+                }
+                Box(
+                    modifier = Modifier
+                        .padding(start = 4.dp)
+                        .size(24.dp)
+                        .background(bg, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(system.short, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = fg)
+                }
             }
         }
     }

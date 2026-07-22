@@ -10,6 +10,8 @@ import com.khateev.medvoice.domain.ChartQuery
 import com.khateev.medvoice.domain.CommandOutcome
 import com.khateev.medvoice.domain.CommandProcessor
 import com.khateev.medvoice.domain.FluidMatcher
+import com.khateev.medvoice.domain.model.AssessmentStatus
+import com.khateev.medvoice.domain.model.AssessmentSystem
 import com.khateev.medvoice.domain.IntentClassifierPort
 import com.khateev.medvoice.domain.IntentResult
 import com.khateev.medvoice.domain.PatientMatcher
@@ -103,6 +105,33 @@ class CommandProcessorTest {
         assertEquals("urine", result.category)
         assertEquals(300, result.amountMl)
         assertNull("I/O logging is deterministic — must not hit the model", classifier.lastText)
+    }
+
+    @Test
+    fun assessment_isRecordedWithoutClassification() {
+        val classifier = FakeClassifier("vitals_log_respiratory_rate")
+        val result = outcome("skin within normal limits", classifier)
+        assertTrue(result is CommandOutcome.AssessmentRecorded)
+        result as CommandOutcome.AssessmentRecorded
+        assertEquals(listOf(AssessmentSystem.SKIN), result.systems)
+        assertEquals(AssessmentStatus.NORMAL, result.status)
+        assertNull("assessments are deterministic — must not hit the model", classifier.lastText)
+    }
+
+    @Test
+    fun headToToeShortcut_marksAllSystemsNormal() {
+        val result = outcome("head to toe within normal limits", FakeClassifier("none"))
+        result as CommandOutcome.AssessmentRecorded
+        assertEquals(AssessmentSystem.entries.size, result.systems.size)
+        assertEquals(AssessmentStatus.NORMAL, result.status)
+    }
+
+    @Test
+    fun vitalWithNumber_stillReachesTheModel_notTheAssessmentMatcher() {
+        val classifier = FakeClassifier("vitals_log_respiratory_rate")
+        val result = outcome("respiratory rate 18", classifier)
+        assertTrue(result is CommandOutcome.VitalRecorded)
+        assertNotNull("a vital must still be classified", classifier.lastText)
     }
 
     @Test

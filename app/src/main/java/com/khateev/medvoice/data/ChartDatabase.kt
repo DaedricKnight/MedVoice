@@ -45,6 +45,17 @@ data class NoteEntity(
     val updatedAt: Long
 )
 
+/** One structured nursing assessment entry for a body system. */
+@Entity(tableName = "assessments")
+data class AssessmentEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val patientId: Long,
+    val system: String,     // AssessmentSystem.name
+    val status: String,     // "NORMAL" | "ABNORMAL"
+    val finding: String?,
+    val timestamp: Long
+)
+
 /** One intake or output event for fluid-balance (I/O) tracking. */
 @Entity(tableName = "fluids")
 data class FluidEntity(
@@ -135,6 +146,25 @@ interface AuditDao {
 }
 
 @Dao
+interface AssessmentDao {
+    /** Latest entry per body system for the patient. */
+    @Query(
+        "SELECT * FROM assessments WHERE patientId = :patientId AND id IN " +
+        "(SELECT MAX(id) FROM assessments WHERE patientId = :patientId GROUP BY system)"
+    )
+    fun observeLatestPerSystem(patientId: Long): Flow<List<AssessmentEntity>>
+
+    @Query("SELECT * FROM assessments WHERE patientId = :patientId ORDER BY id DESC LIMIT 1")
+    suspend fun lastForPatient(patientId: Long): AssessmentEntity?
+
+    @Query("DELETE FROM assessments WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
+    @Insert
+    suspend fun insert(assessment: AssessmentEntity)
+}
+
+@Dao
 interface FluidDao {
     @Query("SELECT * FROM fluids WHERE patientId = :patientId ORDER BY id")
     fun observeForPatient(patientId: Long): Flow<List<FluidEntity>>
@@ -150,8 +180,11 @@ interface FluidDao {
 }
 
 @Database(
-    entities = [PatientEntity::class, VitalEntity::class, NoteEntity::class, AuditEntity::class, FluidEntity::class],
-    version = 4,
+    entities = [
+        PatientEntity::class, VitalEntity::class, NoteEntity::class,
+        AuditEntity::class, FluidEntity::class, AssessmentEntity::class
+    ],
+    version = 5,
     exportSchema = false
 )
 abstract class ChartDatabase : RoomDatabase() {
@@ -160,6 +193,7 @@ abstract class ChartDatabase : RoomDatabase() {
     abstract fun notes(): NoteDao
     abstract fun audit(): AuditDao
     abstract fun fluids(): FluidDao
+    abstract fun assessments(): AssessmentDao
 
     companion object {
         @Volatile
@@ -216,13 +250,29 @@ abstract class ChartDatabase : RoomDatabase() {
             }
         }
 
+        /** Structured nursing assessment table. */
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `assessments` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`patientId` INTEGER NOT NULL, " +
+                        "`system` TEXT NOT NULL, " +
+                        "`status` TEXT NOT NULL, " +
+                        "`finding` TEXT, " +
+                        "`timestamp` INTEGER NOT NULL)"
+                )
+            }
+        }
+
         fun get(context: Context): ChartDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     ChartDatabase::class.java,
                     "medvoice.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .build().also { instance = it }
             }
     }
 }

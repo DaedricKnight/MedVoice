@@ -5,6 +5,8 @@
  */
 package com.khateev.medvoice
 
+import com.khateev.medvoice.domain.model.AssessmentResult
+import com.khateev.medvoice.domain.model.AssessmentSystem
 import com.khateev.medvoice.domain.model.FluidTotals
 import com.khateev.medvoice.domain.model.News2
 import com.khateev.medvoice.domain.model.NoteSection
@@ -69,6 +71,7 @@ data class ChartUiState(
     val showAddPatient: Boolean = false,
     val vitals: Map<VitalType, VitalValue> = emptyMap(),
     val fluids: FluidTotals? = null,
+    val assessments: Map<AssessmentSystem, AssessmentResult> = emptyMap(),
     val actions: List<LogEntry> = emptyList(),
     val pendingAction: PendingAction? = null,
     val historyType: VitalType? = null,

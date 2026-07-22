@@ -5,6 +5,9 @@
  */
 package com.khateev.medvoice
 import com.khateev.medvoice.domain.ChartAnswers
+import com.khateev.medvoice.domain.model.AssessmentResult
+import com.khateev.medvoice.domain.model.AssessmentStatus
+import com.khateev.medvoice.domain.model.AssessmentSystem
 import com.khateev.medvoice.domain.model.FluidTotals
 import com.khateev.medvoice.domain.model.NoteSection
 import com.khateev.medvoice.domain.model.News2
@@ -120,6 +123,7 @@ class ChartAnswersTest {
             patientName = "Jane Roe", ward = "Ward A, Room 3",
             news2 = news2, vitals = vitals,
             fluids = FluidTotals(intakeMl = 700, outputMl = 300, count = 3),
+            assessments = emptyMap(),
             plan = "start antibiotics", mostRecentActivity = "pain level 3 recorded"
         )
         assertTrue(a.spoken.startsWith("Jane Roe, Ward A, Room 3."))
@@ -132,8 +136,26 @@ class ChartAnswersTest {
 
     @Test
     fun summary_emptyChart_saysNoData() {
-        val a = ChartAnswers.summary("", "", null, emptyMap(), null, null, null)
+        val a = ChartAnswers.summary("", "", null, emptyMap(), null, emptyMap(), null, null)
         assertEquals("No data recorded for this patient yet.", a.spoken)
+    }
+
+    @Test
+    fun assessments_reportNormalCountAbnormalAndNotAssessed() {
+        assertEquals("No systems assessed yet.", ChartAnswers.assessments(emptyMap()).spoken)
+
+        val map = mapOf(
+            AssessmentSystem.NEURO to AssessmentResult(AssessmentStatus.NORMAL, null, "12:00"),
+            AssessmentSystem.RESPIRATORY to AssessmentResult(AssessmentStatus.NORMAL, null, "12:00"),
+            AssessmentSystem.SKIN to AssessmentResult(
+                AssessmentStatus.ABNORMAL, "redness on the sacrum", "12:05"
+            )
+        )
+        val a = ChartAnswers.assessments(map)
+        assertTrue(a.spoken.contains("2 within normal limits"))
+        assertTrue(a.spoken.contains("Skin abnormal — redness on the sacrum"))
+        // 7 systems total, 3 assessed
+        assertTrue(a.spoken.contains("4 not assessed"))
     }
 
     @Test

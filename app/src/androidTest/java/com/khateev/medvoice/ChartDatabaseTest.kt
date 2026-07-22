@@ -8,6 +8,7 @@ package com.khateev.medvoice
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.khateev.medvoice.data.AssessmentEntity
 import com.khateev.medvoice.data.AuditEntity
 import com.khateev.medvoice.data.ChartDatabase
 import com.khateev.medvoice.data.ChartRepository
@@ -144,6 +145,27 @@ class ChartDatabaseTest {
         assertEquals("urine", last?.category)
         db.fluids().deleteById(last!!.id)
         assertEquals(2, db.fluids().observeForPatient(pid).first().size)
+    }
+
+    @Test
+    fun assessments_keepLatestPerSystemAndUndo() = runBlocking {
+        val pid = db.patients().insert(PatientEntity(name = "A", mrn = "1", ward = "W"))
+        db.assessments().insert(AssessmentEntity(patientId = pid, system = "SKIN", status = "NORMAL", finding = null, timestamp = 1))
+        db.assessments().insert(AssessmentEntity(patientId = pid, system = "NEURO", status = "NORMAL", finding = null, timestamp = 2))
+        // Re-assessing skin supersedes the earlier entry
+        db.assessments().insert(AssessmentEntity(patientId = pid, system = "SKIN", status = "ABNORMAL", finding = "sacral redness", timestamp = 3))
+
+        val latest = db.assessments().observeLatestPerSystem(pid).first()
+        assertEquals(2, latest.size)
+        val skin = latest.single { it.system == "SKIN" }
+        assertEquals("ABNORMAL", skin.status)
+        assertEquals("sacral redness", skin.finding)
+
+        val last = db.assessments().lastForPatient(pid)
+        assertEquals("SKIN", last?.system)
+        db.assessments().deleteById(last!!.id)
+        // Undo restores the previous skin entry as the latest
+        assertEquals("NORMAL", db.assessments().observeLatestPerSystem(pid).first().single { it.system == "SKIN" }.status)
     }
 
     @Test

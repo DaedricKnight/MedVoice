@@ -76,6 +76,28 @@ class ChartRepository(private val db: ChartDatabase) {
 
     suspend fun deleteFluid(id: Long) = db.fluids().deleteById(id)
 
+    // --- Structured nursing assessments ---
+
+    fun assessments(patientId: Long): Flow<List<AssessmentEntity>> =
+        db.assessments().observeLatestPerSystem(patientId)
+
+    suspend fun recordAssessment(patientId: Long, system: String, status: String, finding: String?) {
+        db.assessments().insert(
+            AssessmentEntity(
+                patientId = patientId,
+                system = system,
+                status = status,
+                finding = finding,
+                timestamp = System.currentTimeMillis()
+            )
+        )
+    }
+
+    suspend fun lastAssessment(patientId: Long): AssessmentEntity? =
+        db.assessments().lastForPatient(patientId)
+
+    suspend fun deleteAssessment(id: Long) = db.assessments().deleteById(id)
+
     /**
      * Demo patients so the prototype is usable out of the box. "Jane Roe" and
      * "Jane Doe" are deliberately confusable — they exercise the wrong-patient
