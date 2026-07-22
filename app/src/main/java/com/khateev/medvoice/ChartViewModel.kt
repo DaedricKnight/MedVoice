@@ -667,10 +667,11 @@ class ChartViewModel(application: Application) : AndroidViewModel(application) {
             outcome.logMessage + (trend?.logSuffix ?: ""),
             outcome.label, outcome.confidence, LogKind.OK, outcome.rawText
         )
-        if (outcome.alert != null) {
-            addLog("⚠ ${outcome.alert.message}", outcome.label, null, LogKind.WARN, outcome.rawText)
+        val alert = outcome.alert
+        if (alert != null) {
+            addLog("⚠ ${alert.message}", outcome.label, null, LogKind.WARN, outcome.rawText)
             // "scratch that" is the accent-robust undo phrase (96% vs 7% for "undo")
-            speak("Warning. ${outcome.alert.message}. Say scratch that if this is a mistake")
+            speak("Warning. ${alert.message}. Say scratch that if this is a mistake")
         } else if (!quiet) {
             speak(outcome.spokenOk + (trend?.spokenSuffix ?: ""))
         }

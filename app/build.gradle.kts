@@ -48,6 +48,8 @@ android {
 }
 
 dependencies {
+    // Pure Kotlin clinical model + spoken-command pipeline
+    implementation(project(":domain"))
     // ASR/VAD/intent-classification engine (whisper.cpp JNI + ONNX Runtime)
     api(project(":voice-core"))
 

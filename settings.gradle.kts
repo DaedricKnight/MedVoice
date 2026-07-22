@@ -22,3 +22,4 @@ dependencyResolutionManagement {
 rootProject.name = "MedVoice"
 include(":app")
 include(":voice-core")
+include(":domain")

@@ -44,6 +44,10 @@ android {
 }
 
 dependencies {
+    // Implements IntentClassifierPort, so the port type is part of its API.
+    api(project(":domain"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.onnxruntime.android)
+    testImplementation(libs.junit)
 }

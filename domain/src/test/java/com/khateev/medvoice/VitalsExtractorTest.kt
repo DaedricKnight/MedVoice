@@ -87,22 +87,4 @@ class VitalsExtractorTest {
         assertEquals(82.0, VitalsExtractor.extractWeight("log weight 82 kilograms")!!, 0.01)
     }
 
-    @Test
-    fun `collapses whisper repetition loops`() {
-        val collapse = com.khateev.medvoice.speech.TranscriptCleaner::collapseRepetitions
-        assertEquals("Log heart rate 72", collapse("Log heart rate 72 Log heart rate 72"))
-        assertEquals("Record blood pressure 120/80", collapse("Record blood pressure 120/80 Record blood pressure 120/80."))
-        assertEquals("pain level 7 out of 10", collapse("pain level 7 out of 10"))
-        assertEquals("call code blue", collapse("call code blue call code blue call code blue call code blue"))
-    }
-
-    @Test
-    fun `strips whisper non-speech annotations`() {
-        val strip = com.khateev.medvoice.speech.TranscriptCleaner::stripNonSpeech
-        assertEquals("", strip("(speaking in foreign language)"))
-        assertEquals("", strip("[BLANK_AUDIO]"))
-        assertEquals("", strip("(music)"))
-        assertEquals("log heart rate 72", strip("log heart rate 72 (coughs)"))
-        assertEquals("record blood pressure 120/80", strip("record blood pressure 120/80"))
-    }
 }
