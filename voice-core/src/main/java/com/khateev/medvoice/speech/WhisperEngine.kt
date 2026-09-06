@@ -73,8 +73,28 @@ class WhisperEngine(private val context: Context) {
         val asset = if (useAccuracyModel) MODEL_SMALL else MODEL_BASE
         try {
             val modelFile = File(context.filesDir, asset)
-            val assetSize = context.assets.openFd(asset).use { it.length }
-            if (!modelFile.exists() || modelFile.length() != assetSize) {
+            // openFd works only for assets stored uncompressed (see
+            // androidResources.noCompress). Fall back to a plain stream when the
+            // asset is deflated, and to an already-present file when it is not
+            // bundled at all — a slim build downloads the model instead.
+            val assetSize = runCatching { context.assets.openFd(asset).use { it.length } }.getOrNull()
+            val bundled = assetSize != null ||
+                runCatching { context.assets.open(asset).use { } }.isSuccess
+            val copyNeeded = when {
+                assetSize != null -> !modelFile.exists() || modelFile.length() != assetSize
+                bundled -> !modelFile.exists() || modelFile.length() == 0L
+                else -> {
+                    if (!modelFile.exists() || modelFile.length() == 0L) {
+                        return@withContext Result.failure(
+                            java.io.FileNotFoundException(
+                                "$asset is neither bundled nor present at ${modelFile.absolutePath}"
+                            )
+                        )
+                    }
+                    false
+                }
+            }
+            if (copyNeeded) {
                 context.assets.open(asset).use { input ->
                     modelFile.outputStream().use { output -> input.copyTo(output) }
                 }
