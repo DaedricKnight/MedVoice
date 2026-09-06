@@ -118,10 +118,14 @@ assets (`app/src/androidTest/assets/tts/`). Two levels:
 
 ## Accuracy mode & accent robustness
 
-The 🎯 toggle switches ASR from base.en to **small.en**, measured at **2.55x the
-latency** and 2.5x the resident memory in exchange for much better handling of
-hard accents. The small model exceeds GitHub's file size limit — fetch it once
-after cloning: `./tools/fetch_models.sh`.
+The 🎯 toggle switches ASR from base.en to **small.en**, measured at roughly
+**2.55x the latency** and 2.5x the resident memory in exchange for much better
+handling of hard accents. That ratio comes from the instrumentation harness on a
+single device, which is known to inflate absolute numbers by 2.16x — the ratio is
+about right, the absolute figures behind it are not, and it has not been re-run on
+the farm because a 181 MB model does not fit a farm-sized APK. The small model
+also exceeds GitHub's file size limit — fetch it once after cloning:
+`./tools/fetch_models.sh`.
 
 Accent/intonation robustness is measured by an automated stand
 (`tools/accent_stress_test.py`): synthesized speech in 7 accents × speed ×
@@ -137,16 +141,28 @@ emulator is much slower than on real arm64 hardware.
 
 ## Performance
 
-Measured end to end on a **Pixel 8 Pro (Tensor G3)**, base.en, n=112 per stage:
-**p50 2.8 s, p99 4.0 s** per command. whisper.cpp is 95.7% of that budget; the
-INT8 intent classifier is 10.5 ms and Silero VAD 114 ms. Resident memory 109 MB,
-peak PSS 239 MB. No thermal drift across the run (+1.2%), because commands are
-bursty rather than continuous.
+Measured on four SoCs with the same standalone harness ([`:bench`](bench/README.md)),
+base.en, end to end per command:
 
-This is one SoC, and a comparatively slow one — treat it as a floor rather than a
-typical figure. Per-stage percentiles, both whisper models, memory, and the
-FP32 → INT8 accuracy cost: **[BENCHMARK.md](BENCHMARK.md)**. Reproduce with
-`LatencyBenchmarkTest`.
+| | Snapdragon 8 Elite<br>Z Fold8 Ultra | Exynos 2400e<br>S24 FE | Dimensity 900<br>M53 | Tensor G3<br>Pixel 8 Pro |
+|---|--:|--:|--:|--:|
+| p50 | **380 ms** | 565 ms | 937 ms | 1285 ms |
+| p99 | 509 ms | 760 ms | 1212 ms | **3545 ms** |
+| p99/p50 | 1.34 | 1.35 | 1.29 | **2.76** |
+
+whisper.cpp is 92-98% of that budget on every device; the INT8 intent classifier
+costs 0.9-3.6 ms and Silero VAD 8-67 ms. Resident memory 164-241 MB.
+
+Medians spread 3.4x across devices, tails spread 7.0x — and one chip owns the
+difference. Three of the four sit at p99/p50 around 1.3; the Tensor G3 is at 2.76,
+a tolerable median hiding a 3.5 s hundredth command. It is the same chip that lost
+91% of its throughput under sustained load in
+[megadetector-int8-ptq](https://github.com/DaedricKnight/megadetector-int8-ptq).
+
+Full per-stage percentiles, memory, and the FP32 -> INT8 accuracy cost:
+**[BENCHMARK.md](BENCHMARK.md)**. Reproduce with the `:bench` APK, or locally with
+`LatencyBenchmarkTest` — but note the two harnesses disagree by 2.16x on the same
+device, and the APK is the representative one.
 
 ## Demo phrases
 
