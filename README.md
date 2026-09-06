@@ -118,9 +118,10 @@ assets (`app/src/androidTest/assets/tts/`). Two levels:
 
 ## Accuracy mode & accent robustness
 
-The 🎯 toggle switches ASR from base.en (~1 s/command) to **small.en** (2-4x
-slower, much better on hard accents). The small model exceeds GitHub's file
-size limit — fetch it once after cloning: `./tools/fetch_models.sh`.
+The 🎯 toggle switches ASR from base.en to **small.en**, measured at **2.55x the
+latency** and 2.5x the resident memory in exchange for much better handling of
+hard accents. The small model exceeds GitHub's file size limit — fetch it once
+after cloning: `./tools/fetch_models.sh`.
 
 Accent/intonation robustness is measured by an automated stand
 (`tools/accent_stress_test.py`): synthesized speech in 7 accents × speed ×
@@ -132,8 +133,20 @@ noise through the full production pipeline. Current numbers and methodology:
 
 Open in Android Studio, run on a tablet (landscape) or any emulator. First
 launch copies the whisper model out of assets (~1 s). Note: whisper on an
-emulator is much slower than on real arm64 hardware; expect ~1-2 s per command
-on a modern tablet.
+emulator is much slower than on real arm64 hardware.
+
+## Performance
+
+Measured end to end on a **Pixel 8 Pro (Tensor G3)**, base.en, n=112 per stage:
+**p50 2.8 s, p99 4.0 s** per command. whisper.cpp is 95.7% of that budget; the
+INT8 intent classifier is 10.5 ms and Silero VAD 114 ms. Resident memory 109 MB,
+peak PSS 239 MB. No thermal drift across the run (+1.2%), because commands are
+bursty rather than continuous.
+
+This is one SoC, and a comparatively slow one — treat it as a floor rather than a
+typical figure. Per-stage percentiles, both whisper models, memory, and the
+FP32 → INT8 accuracy cost: **[BENCHMARK.md](BENCHMARK.md)**. Reproduce with
+`LatencyBenchmarkTest`.
 
 ## Demo phrases
 
