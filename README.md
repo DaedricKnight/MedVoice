@@ -6,6 +6,12 @@ speech and classify the intent, and the app writes the value into the patient
 chart. **Fully offline** — the APK bundles its own ASR (whisper.cpp), so neither
 audio nor text ever leaves the device (no Google speech services involved).
 
+
+
+https://github.com/user-attachments/assets/84000dac-e9a2-42d4-83a2-7b91aeb246e4
+
+
+
 ## Architecture
 
 ```
